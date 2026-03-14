@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Router — FlexUI Docs</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="site-header">
+  <button class="header-icon-btn menu-btn" id="menu-btn" title="Toggle sidebar" aria-label="Toggle sidebar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+  <a href="index.html" class="header-logo"><div class="logo-mark"></div>FlexUI</a>
+  <span class="header-version">v1.1.3</span>
+  <div class="header-spacer"></div>
+  <button class="header-icon-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle theme"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2a6 6 0 1 0 8 8 4.5 4.5 0 0 1-8-8z"/></svg></button>
+</header>
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="main">
+    <div class="page-content">
+      <h1 class="page-title">Router</h1>
+      <p class="page-desc">FlexUI ships with a file-based router and a client-side history router. Drop files into <code>/pages</code> and routes are generated automatically.</p>
+
+      <div class="on-page-toc">
+        <div class="on-page-toc-title">On this page</div>
+        <a href="#file-routing">File-Based Routing</a>
+        <a href="#dynamic">Dynamic Segments</a>
+        <a href="#link">Link &amp; NavLink</a>
+        <a href="#userouter">useRouter</a>
+        <a href="#useparams">useParams</a>
+        <a href="#usesearch">useSearchParams</a>
+        <a href="#programmatic">Programmatic Navigation</a>
+        <a href="#prefetch">Prefetching</a>
+      </div>
+
+      <h2 id="file-routing">File-Based Routing</h2>
+      <p>The FlexUI file router scans the <code>pagesDir</code> (default: <code>pages/</code>) and builds a route manifest automatically.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File</th><th>Route</th></tr></thead>
+          <tbody>
+            <tr><td><code>pages/index.js</code></td><td><code>/</code></td></tr>
+            <tr><td><code>pages/about.js</code></td><td><code>/about</code></td></tr>
+            <tr><td><code>pages/blog/index.js</code></td><td><code>/blog</code></td></tr>
+            <tr><td><code>pages/blog/[slug].js</code></td><td><code>/blog/:slug</code></td></tr>
+            <tr><td><code>pages/docs/[...path].js</code></td><td><code>/docs/*</code> (catch-all)</td></tr>
+            <tr><td><code>pages/404.js</code></td><td>Not-found fallback</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="dynamic">Dynamic Segments</h2>
+      <p>Wrap a segment in square brackets to make it dynamic. Access the value via <code>useParams</code>.</p>
+      <div class="code-block">
+        <span class="code-label">pages/blog/[slug].js</span>
+        <pre><code><span class="kw">import</span> { createElement } <span class="kw">from</span> <span class="str">'flexui'</span>;
+<span class="kw">import</span> { useParams } <span class="kw">from</span> <span class="str">'flexui/router'</span>;
+
+<span class="kw">export default function</span> <span class="fn">BlogPost</span>() {
+  <span class="kw">const</span> { slug } = <span class="fn">useParams</span>();
+  <span class="kw">return</span> <span class="fn">createElement</span>(<span class="str">'article'</span>, <span class="kw">null</span>,
+    <span class="fn">createElement</span>(<span class="str">'h1'</span>, <span class="kw">null</span>, <span class="str">`Post: </span><span class="prop">${slug}</span><span class="str">`</span>)
+  );
+}
+
+<span class="cmt">// SSG — tell the router which slugs exist</span>
+<span class="kw">export async function</span> <span class="fn">getStaticPaths</span>() {
+  <span class="kw">const</span> posts = <span class="kw">await</span> <span class="fn">fetchAllPosts</span>();
+  <span class="kw">return</span> { paths: posts.<span class="fn">map</span>(p => ({ params: { slug: p.slug } })) };
+}</code></pre>
+      </div>
+
+      <h2 id="link">Link &amp; NavLink</h2>
+      <p><code>Link</code> renders an accessible anchor that uses client-side navigation. <code>NavLink</code> adds an <code>active</code> class automatically when the href matches the current path.</p>
+      <pre><code><span class="kw">import</span> { Link, NavLink } <span class="kw">from</span> <span class="str">'flexui/router'</span>;
+
+<span class="cmt">// Basic link</span>
+<span class="fn">createElement</span>(Link, { href: <span class="str">'/about'</span> }, <span class="str">'About'</span>);
+
+<span class="cmt">// Prefetch on hover (default: true)</span>
+<span class="fn">createElement</span>(Link, { href: <span class="str">'/blog'</span>, prefetch: <span class="kw">true</span> }, <span class="str">'Blog'</span>);
+
+<span class="cmt">// NavLink — adds class="active" when path matches</span>
+<span class="fn">createElement</span>(NavLink, { href: <span class="str">'/docs'</span>, activeClass: <span class="str">'nav--active'</span> }, <span class="str">'Docs'</span>);</code></pre>
+
+      <h3>Link Props</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Prop</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>href</code></td><td><code>string</code></td><td>—</td><td>Destination path (required)</td></tr>
+            <tr><td><code>prefetch</code></td><td><code>boolean</code></td><td><code>true</code></td><td>Prefetch bundle on hover</td></tr>
+            <tr><td><code>replace</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Use <code>history.replaceState</code> instead of push</td></tr>
+            <tr><td><code>className</code></td><td><code>string</code></td><td>—</td><td>CSS class on the anchor element</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="userouter">useRouter</h2>
+      <p>Returns the router instance with the current pathname, query, and navigation methods.</p>
+      <pre><code><span class="kw">import</span> { useRouter } <span class="kw">from</span> <span class="str">'flexui/router'</span>;
+
+<span class="kw">function</span> <span class="fn">SearchBar</span>() {
+  <span class="kw">const</span> router = <span class="fn">useRouter</span>();
+
+  <span class="kw">return</span> <span class="fn">createElement</span>(<span class="str">'input'</span>, {
+    onKeyDown: (e) => {
+      <span class="kw">if</span> (e.key === <span class="str">'Enter'</span>)
+        router.<span class="fn">push</span>(<span class="str">`/search?q=</span><span class="prop">${e.target.value}</span><span class="str">`</span>);
+    }
+  });
+}</code></pre>
+
+      <h3>Router API</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Property / Method</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>router.pathname</code></td><td>Current URL pathname (e.g. <code>/blog/hello</code>)</td></tr>
+            <tr><td><code>router.query</code></td><td>Parsed query string as a plain object</td></tr>
+            <tr><td><code>router.push(url)</code></td><td>Navigate to a new URL, adds to history</td></tr>
+            <tr><td><code>router.replace(url)</code></td><td>Navigate without adding a history entry</td></tr>
+            <tr><td><code>router.back()</code></td><td>Go back one step in history</td></tr>
+            <tr><td><code>router.forward()</code></td><td>Go forward one step in history</td></tr>
+            <tr><td><code>router.prefetch(path)</code></td><td>Pre-load a route's component bundle</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="useparams">useParams</h2>
+      <p>Returns an object of dynamic route segments for the current page.</p>
+      <pre><code><span class="cmt">// URL: /blog/hello-world</span>
+<span class="kw">const</span> { slug } = <span class="fn">useParams</span>(); <span class="cmt">// { slug: 'hello-world' }</span></code></pre>
+
+      <h2 id="usesearch">useSearchParams</h2>
+      <p>Returns a parsed object of the current URL query string.</p>
+      <pre><code><span class="cmt">// URL: /search?q=flexui&amp;page=2</span>
+<span class="kw">const</span> { q, page } = <span class="fn">useSearchParams</span>(); <span class="cmt">// { q: 'flexui', page: '2' }</span></code></pre>
+
+      <h2 id="programmatic">Programmatic Navigation</h2>
+      <pre><code><span class="kw">const</span> router = <span class="fn">useRouter</span>();
+
+<span class="cmt">// Navigate after form submit</span>
+<span class="kw">async function</span> <span class="fn">handleSubmit</span>(e) {
+  <span class="kw">await</span> <span class="fn">saveData</span>(formData);
+  router.<span class="fn">push</span>(<span class="str">'/dashboard'</span>);
+}
+
+<span class="cmt">// Replace current entry (login redirect)</span>
+<span class="kw">if</span> (!user) router.<span class="fn">replace</span>(<span class="str">'/login'</span>);</code></pre>
+
+      <h2 id="prefetch">Prefetching</h2>
+      <p>Call <code>router.prefetch()</code> or set <code>prefetch</code> on <code>&lt;Link&gt;</code> to preload a route's JavaScript bundle before the user navigates. This makes navigation feel instant.</p>
+      <pre><code><span class="cmt">// Prefetch on button hover</span>
+<span class="fn">createElement</span>(<span class="str">'button'</span>, {
+  onMouseEnter: () => router.<span class="fn">prefetch</span>(<span class="str">'/dashboard'</span>),
+  onClick: () => router.<span class="fn">push</span>(<span class="str">'/dashboard'</span>),
+}, <span class="str">'Go to Dashboard'</span>);</code></pre>
+    </div>
+  </main>
+</div>
+<script src="nav.js"></script>
+</body>
+</html>

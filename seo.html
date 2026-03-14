@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SEO Tools — FlexUI Docs</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="site-header">
+  <button class="header-icon-btn menu-btn" id="menu-btn" title="Toggle sidebar" aria-label="Toggle sidebar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+  <a href="index.html" class="header-logo"><div class="logo-mark"></div>FlexUI</a>
+  <span class="header-version">v1.1.3</span>
+  <div class="header-spacer"></div>
+  <button class="header-icon-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle theme"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2a6 6 0 1 0 8 8 4.5 4.5 0 0 1-8-8z"/></svg></button>
+</header>
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="main">
+    <div class="page-content">
+      <h1 class="page-title">SEO Tools</h1>
+      <p class="page-desc">FlexUI includes a complete SEO toolkit: a declarative <code>&lt;Head&gt;</code> component, Open Graph and Twitter Card helpers, JSON-LD structured data, sitemap and robots.txt generators.</p>
+
+      <div class="on-page-toc">
+        <div class="on-page-toc-title">On this page</div>
+        <a href="#head">Head Component</a>
+        <a href="#opengraph">openGraph</a>
+        <a href="#twittercard">twitterCard</a>
+        <a href="#jsonld">jsonLD &amp; Schemas</a>
+        <a href="#sitemap">Sitemap</a>
+        <a href="#robots">robots.txt</a>
+      </div>
+
+      <h2 id="head">Head Component</h2>
+      <p>Declaratively manage <code>&lt;head&gt;</code> tags from anywhere in the component tree. Works in both CSR and SSR modes. Nested <code>&lt;Head&gt;</code> usage follows a last-write-wins merge strategy.</p>
+      <pre><code><span class="kw">import</span> { Head } <span class="kw">from</span> <span class="str">'flexui/seo'</span>;
+
+<span class="kw">export default function</span> <span class="fn">AboutPage</span>() {
+  <span class="kw">return</span> <span class="fn">createElement</span>(Fragment, <span class="kw">null</span>,
+    <span class="fn">createElement</span>(Head, <span class="kw">null</span>,
+      <span class="fn">createElement</span>(<span class="str">'title'</span>, <span class="kw">null</span>, <span class="str">'About — MyApp'</span>),
+      <span class="fn">createElement</span>(<span class="str">'meta'</span>, { name: <span class="str">'description'</span>, content: <span class="str">'Learn about us'</span> }),
+      <span class="fn">createElement</span>(<span class="str">'link'</span>, { rel: <span class="str">'canonical'</span>, href: <span class="str">'https://myapp.com/about'</span> }),
+    ),
+    <span class="fn">createElement</span>(<span class="str">'main'</span>, <span class="kw">null</span>, <span class="str">'Page content'</span>)
+  );
+}</code></pre>
+
+      <h2 id="opengraph">openGraph</h2>
+      <p>Returns an array of <code>&lt;meta&gt;</code> elements for Open Graph tags. Pass the result inside <code>&lt;Head&gt;</code>.</p>
+      <pre><code><span class="kw">import</span> { Head, openGraph } <span class="kw">from</span> <span class="str">'flexui/seo'</span>;
+
+<span class="fn">createElement</span>(Head, <span class="kw">null</span>,
+  ...<span class="fn">openGraph</span>({
+    title:       <span class="str">'My Article'</span>,
+    description: <span class="str">'A great read'</span>,
+    image:       <span class="str">'https://myapp.com/og.png'</span>,
+    url:         <span class="str">'https://myapp.com/blog/my-article'</span>,
+    type:        <span class="str">'article'</span>,
+    siteName:    <span class="str">'MyApp'</span>,
+    locale:      <span class="str">'en_US'</span>,
+  })
+);</code></pre>
+
+      <h3>openGraph Options</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Option</th><th>Type</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>title</code></td><td><code>string</code></td><td><code>og:title</code></td></tr>
+            <tr><td><code>description</code></td><td><code>string</code></td><td><code>og:description</code></td></tr>
+            <tr><td><code>image</code></td><td><code>string</code></td><td><code>og:image</code> URL</td></tr>
+            <tr><td><code>url</code></td><td><code>string</code></td><td>Canonical <code>og:url</code></td></tr>
+            <tr><td><code>type</code></td><td><code>string</code></td><td>Default: <code>'website'</code>. Also: <code>'article'</code>, <code>'product'</code></td></tr>
+            <tr><td><code>siteName</code></td><td><code>string</code></td><td><code>og:site_name</code></td></tr>
+            <tr><td><code>locale</code></td><td><code>string</code></td><td>Default: <code>'en_US'</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="twittercard">twitterCard</h2>
+      <pre><code><span class="kw">import</span> { twitterCard } <span class="kw">from</span> <span class="str">'flexui/seo'</span>;
+
+<span class="fn">createElement</span>(Head, <span class="kw">null</span>,
+  ...<span class="fn">twitterCard</span>({
+    card:        <span class="str">'summary_large_image'</span>,
+    title:       <span class="str">'My Article'</span>,
+    description: <span class="str">'A great read'</span>,
+    image:       <span class="str">'https://myapp.com/twitter-card.png'</span>,
+    site:        <span class="str">'@myapp'</span>,
+    creator:     <span class="str">'@author'</span>,
+  })
+);</code></pre>
+
+      <h2 id="jsonld">jsonLD &amp; Schema Helpers</h2>
+      <p>Generates a <code>&lt;script type="application/ld+json"&gt;</code> tag from a structured data object. Schema helpers pre-fill required fields.</p>
+      <pre><code><span class="kw">import</span> { jsonLD, articleSchema, breadcrumbSchema } <span class="kw">from</span> <span class="str">'flexui/seo'</span>;
+
+<span class="fn">createElement</span>(Head, <span class="kw">null</span>,
+  <span class="fn">jsonLD</span>(<span class="fn">articleSchema</span>({
+    headline:      <span class="str">'My Article'</span>,
+    datePublished: <span class="str">'2025-03-01'</span>,
+    author:        { name: <span class="str">'Jane Doe'</span> },
+    image:         <span class="str">'https://myapp.com/article.jpg'</span>,
+  })),
+  <span class="fn">jsonLD</span>(<span class="fn">breadcrumbSchema</span>([
+    { name: <span class="str">'Home'</span>, url: <span class="str">'/'</span> },
+    { name: <span class="str">'Blog'</span>, url: <span class="str">'/blog'</span> },
+    { name: <span class="str">'My Article'</span> },
+  ]))
+);</code></pre>
+
+      <h3>Available Schema Helpers</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Helper</th><th>Schema type</th></tr></thead>
+          <tbody>
+            <tr><td><code>articleSchema(opts)</code></td><td><code>Article</code></td></tr>
+            <tr><td><code>websiteSchema(opts)</code></td><td><code>WebSite</code></td></tr>
+            <tr><td><code>breadcrumbSchema(items)</code></td><td><code>BreadcrumbList</code></td></tr>
+            <tr><td><code>faqSchema(faqs)</code></td><td><code>FAQPage</code></td></tr>
+            <tr><td><code>productSchema(opts)</code></td><td><code>Product</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="sitemap">Sitemap Generation</h2>
+      <pre><code><span class="kw">import</span> { generateSitemap } <span class="kw">from</span> <span class="str">'flexui/seo'</span>;
+
+<span class="kw">const</span> xml = <span class="kw">await</span> <span class="fn">generateSitemap</span>({
+  baseUrl: <span class="str">'https://myapp.com'</span>,
+  routes: [
+    { path: <span class="str">'/'</span>,      changefreq: <span class="str">'daily'</span>,   priority: <span class="num">1.0</span> },
+    { path: <span class="str">'/about'</span>, changefreq: <span class="str">'monthly'</span>, priority: <span class="num">0.8</span> },
+    { path: <span class="str">'/blog'</span>,  changefreq: <span class="str">'weekly'</span>,  priority: <span class="num">0.9</span>,
+      images: [{ url: <span class="str">'https://myapp.com/og.png'</span>, title: <span class="str">'OG image'</span> }]
+    },
+  ],
+});
+
+fs.<span class="fn">writeFileSync</span>(<span class="str">'dist/sitemap.xml'</span>, xml);</code></pre>
+      <p>Or use the CLI:</p>
+      <pre><code>flexui generate sitemap</code></pre>
+
+      <h2 id="robots">robots.txt Generation</h2>
+      <pre><code><span class="kw">import</span> { generateRobots } <span class="kw">from</span> <span class="str">'flexui/seo'</span>;
+
+<span class="kw">const</span> txt = <span class="fn">generateRobots</span>({
+  sitemap: <span class="str">'https://myapp.com/sitemap.xml'</span>,
+  agents: [
+    { agent: <span class="str">'*'</span>,          allow: [<span class="str">'/'</span>], disallow: [<span class="str">'/admin'</span>] },
+    { agent: <span class="str">'Googlebot'</span>, allow: [<span class="str">'/'</span>] },
+  ],
+});</code></pre>
+      <p>Or use the CLI:</p>
+      <pre><code>flexui generate robots</code></pre>
+    </div>
+  </main>
+</div>
+<script src="nav.js"></script>
+</body>
+</html>

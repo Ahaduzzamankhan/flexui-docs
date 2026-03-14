@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Project Structure — FlexUI Docs</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <button class="header-icon-btn menu-btn" id="menu-btn" title="Toggle sidebar" aria-label="Toggle sidebar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+  <a href="index.html" class="header-logo"><div class="logo-mark"></div>FlexUI</a>
+  <span class="header-version">v1.1.3</span>
+  <div class="header-spacer"></div>
+  <button class="header-icon-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle theme"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2a6 6 0 1 0 8 8 4.5 4.5 0 0 1-8-8z"/></svg></button>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="main">
+    <div class="page-content">
+
+      <h1 class="page-title">Project Structure</h1>
+      <p class="page-desc">Overview of the files and directories in a FlexUI project, and what each one does.</p>
+
+      <h2 id="layout">Directory Layout</h2>
+      <pre><code>my-app/
+├── flexui.config.js        <span class="cmt"># Framework configuration</span>
+├── package.json
+├── pages/                  <span class="cmt"># File-based routes</span>
+│   ├── _app.js             <span class="cmt"># Global layout / app shell</span>
+│   ├── _document.js        <span class="cmt"># HTML document shell (SSR/SSG)</span>
+│   ├── index.js            <span class="cmt"># Route: /</span>
+│   ├── about.js            <span class="cmt"># Route: /about</span>
+│   └── blog/
+│       ├── index.js        <span class="cmt"># Route: /blog</span>
+│       └── [slug].js       <span class="cmt"># Route: /blog/:slug  (dynamic)</span>
+├── components/             <span class="cmt"># Reusable UI components</span>
+│   └── Button.js
+├── public/                 <span class="cmt"># Static files (served as-is)</span>
+│   ├── index.html          <span class="cmt"># HTML entry (CSR)</span>
+│   ├── styles.css
+│   └── favicon.ico
+└── src/
+    └── main.js             <span class="cmt"># Client-side entry point</span></code></pre>
+
+      <h2 id="pages">Pages Directory</h2>
+      <p>Every file inside <code>pages/</code> automatically becomes a route. FlexUI's file router translates file paths to URL paths:</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File</th><th>URL</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><code>pages/index.js</code></td><td><code>/</code></td><td>Home route</td></tr>
+            <tr><td><code>pages/about.js</code></td><td><code>/about</code></td><td></td></tr>
+            <tr><td><code>pages/blog/index.js</code></td><td><code>/blog</code></td><td></td></tr>
+            <tr><td><code>pages/blog/[slug].js</code></td><td><code>/blog/:slug</code></td><td>Dynamic segment</td></tr>
+            <tr><td><code>pages/docs/[...rest].js</code></td><td><code>/docs/*</code></td><td>Catch-all segment</td></tr>
+            <tr><td><code>pages/_app.js</code></td><td>—</td><td>Global layout shell</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="app-file">_app.js — Global Layout</h2>
+      <p>Wrap every page in a shared layout by exporting a component from <code>pages/_app.js</code>:</p>
+
+      <div class="code-block">
+        <span class="code-label">pages/_app.js</span>
+        <pre><code><span class="kw">import</span> { createElement } <span class="kw">from</span> <span class="str">'flexui'</span>;
+
+<span class="kw">export default function</span> <span class="fn">App</span>({ Component, pageProps }) {
+  <span class="kw">return</span> <span class="fn">createElement</span>(<span class="str">'div'</span>, { className: <span class="str">'app'</span> },
+    <span class="fn">createElement</span>(<span class="str">'nav'</span>, <span class="kw">null</span>, <span class="cmt">/* global nav */</span>),
+    <span class="fn">createElement</span>(Component, pageProps),
+    <span class="fn">createElement</span>(<span class="str">'footer'</span>, <span class="kw">null</span>, <span class="cmt">/* global footer */</span>),
+  );
+}</code></pre>
+      </div>
+
+      <h2 id="entry">Client Entry Point</h2>
+
+      <div class="code-block">
+        <span class="code-label">src/main.js</span>
+        <pre><code><span class="kw">import</span> { createRoot } <span class="kw">from</span> <span class="str">'flexui'</span>;
+<span class="kw">import</span> { FlexRouter } <span class="kw">from</span> <span class="str">'flexui/router'</span>;
+<span class="kw">import</span> App <span class="kw">from</span> <span class="str">'../pages/_app.js'</span>;
+
+<span class="kw">const</span> root = <span class="fn">createRoot</span>(document.<span class="fn">getElementById</span>(<span class="str">'root'</span>));
+root.<span class="fn">render</span>(<span class="fn">createElement</span>(FlexRouter, <span class="kw">null</span>, <span class="fn">createElement</span>(App, <span class="kw">null</span>)));</code></pre>
+      </div>
+
+      <h2 id="public">Public Directory</h2>
+      <p>Files in <code>public/</code> are served as static assets. Reference them from your HTML or components using root-relative paths:</p>
+      <pre><code><span class="cmt">&lt;!-- public/index.html --&gt;</span>
+&lt;div id="root"&gt;&lt;/div&gt;
+&lt;script type="module" src="/main.js"&gt;&lt;/script&gt;</code></pre>
+
+      <h2 id="output">Build Output</h2>
+      <pre><code>dist/
+├── index.html
+├── asset-manifest.json     <span class="cmt"># Maps source files to hashed bundles</span>
+├── _chunks/                <span class="cmt"># Code-split chunks</span>
+├── static/
+│   └── js/
+│       ├── main.[hash].js
+│       └── vendor.[hash].js
+└── sitemap.xml             <span class="cmt"># (if generated)</span></code></pre>
+
+    </div>
+  </main>
+</div>
+
+<script src="nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Components — FlexUI Docs</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="site-header">
+  <button class="header-icon-btn menu-btn" id="menu-btn" title="Toggle sidebar" aria-label="Toggle sidebar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+  <a href="index.html" class="header-logo"><div class="logo-mark"></div>FlexUI</a>
+  <span class="header-version">v1.1.3</span>
+  <div class="header-spacer"></div>
+  <button class="header-icon-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle theme"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2a6 6 0 1 0 8 8 4.5 4.5 0 0 1-8-8z"/></svg></button>
+</header>
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="main">
+    <div class="page-content">
+      <h1 class="page-title">Components</h1>
+      <p class="page-desc">FlexUI supports functional and class components, memoization, lazy loading, context, and forward refs — all with a familiar, React-compatible API.</p>
+
+      <div class="on-page-toc">
+        <div class="on-page-toc-title">On this page</div>
+        <a href="#functional">Functional Components</a>
+        <a href="#class">Class Components</a>
+        <a href="#createElement">createElement</a>
+        <a href="#fragment">Fragment</a>
+        <a href="#memo">memo</a>
+        <a href="#lazy">lazy</a>
+        <a href="#context">createContext</a>
+        <a href="#forwardref">forwardRef</a>
+      </div>
+
+      <h2 id="functional">Functional Components</h2>
+      <p>A function that accepts props and returns a FlexElement. This is the recommended way to build UI in FlexUI.</p>
+      <div class="code-block">
+        <span class="code-label">components/Button.js</span>
+        <pre><code><span class="kw">import</span> { createElement } <span class="kw">from</span> <span class="str">'flexui'</span>;
+
+<span class="kw">export function</span> <span class="fn">Button</span>({ label, onClick, variant = <span class="str">'primary'</span> }) {
+  <span class="kw">return</span> <span class="fn">createElement</span>(
+    <span class="str">'button'</span>,
+    { className: <span class="str">`btn btn--</span><span class="prop">${variant}</span><span class="str">`</span>, onClick },
+    label
+  );
+}</code></pre>
+      </div>
+
+      <h2 id="class">Class Components</h2>
+      <p>Extend <code>Component</code> for components that need instance methods or fine-grained lifecycle control. <code>PureComponent</code> adds automatic shallow-comparison in <code>shouldComponentUpdate</code>.</p>
+      <div class="code-block">
+        <span class="code-label">components/Counter.js</span>
+        <pre><code><span class="kw">import</span> { createElement, Component } <span class="kw">from</span> <span class="str">'flexui'</span>;
+
+<span class="kw">export class</span> <span class="cls">Counter</span> <span class="kw">extends</span> <span class="cls">Component</span> {
+  state = { count: <span class="num">0</span> };
+
+  <span class="fn">render</span>() {
+    <span class="kw">return</span> <span class="fn">createElement</span>(<span class="str">'div'</span>, <span class="kw">null</span>,
+      <span class="fn">createElement</span>(<span class="str">'p'</span>, <span class="kw">null</span>, <span class="str">`Count: </span><span class="prop">${this.state.count}</span><span class="str">`</span>),
+      <span class="fn">createElement</span>(<span class="str">'button'</span>, {
+        onClick: () => <span class="kw">this</span>.<span class="fn">setState</span>(s => ({ count: s.count + <span class="num">1</span> }))
+      }, <span class="str">'Increment'</span>)
+    );
+  }
+}</code></pre>
+      </div>
+
+      <h4>Class Lifecycle Methods</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Method</th><th>When it runs</th></tr></thead>
+          <tbody>
+            <tr><td><code>componentDidMount()</code></td><td>After first render and DOM insertion</td></tr>
+            <tr><td><code>componentDidUpdate(prevProps, prevState)</code></td><td>After every re-render</td></tr>
+            <tr><td><code>componentWillUnmount()</code></td><td>Before component is removed from DOM</td></tr>
+            <tr><td><code>shouldComponentUpdate(nextProps, nextState)</code></td><td>Return <code>false</code> to skip re-render</td></tr>
+            <tr><td><code>static getDerivedStateFromError(error)</code></td><td>Error boundary — return new state on child error</td></tr>
+            <tr><td><code>componentDidCatch(error, info)</code></td><td>Error boundary — side-effect on child error</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="createElement">createElement</h2>
+      <p>Creates a virtual DOM node. Every UI element ultimately calls this function.</p>
+      <pre><code>createElement(type, props, ...children) → FlexElement</code></pre>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>type</code></td><td><code>string | Function | Class</code></td><td>HTML tag name or component reference</td></tr>
+            <tr><td><code>props</code></td><td><code>object | null</code></td><td>Attributes, event handlers, <code>key</code>, <code>ref</code>. Pass <code>null</code> for none.</td></tr>
+            <tr><td><code>...children</code></td><td><code>FlexElement | string | number</code></td><td>Zero or more child nodes</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre><code><span class="cmt">// Plain element</span>
+<span class="fn">createElement</span>(<span class="str">'h1'</span>, { className: <span class="str">'title'</span> }, <span class="str">'Hello'</span>);
+
+<span class="cmt">// Component with children</span>
+<span class="fn">createElement</span>(<span class="cls">Card</span>, { title: <span class="str">'Welcome'</span> },
+  <span class="fn">createElement</span>(<span class="str">'p'</span>, <span class="kw">null</span>, <span class="str">'Card body text.'</span>)
+);
+
+<span class="cmt">// Keyed list</span>
+items.<span class="fn">map</span>(item =>
+  <span class="fn">createElement</span>(<span class="str">'li'</span>, { key: item.id }, item.name)
+);</code></pre>
+
+      <h2 id="fragment">Fragment</h2>
+      <p>Groups multiple children without adding an extra DOM node.</p>
+      <pre><code><span class="kw">import</span> { createElement, Fragment } <span class="kw">from</span> <span class="str">'flexui'</span>;
+
+<span class="fn">createElement</span>(Fragment, <span class="kw">null</span>,
+  <span class="fn">createElement</span>(<span class="str">'dt'</span>, <span class="kw">null</span>, <span class="str">'Term'</span>),
+  <span class="fn">createElement</span>(<span class="str">'dd'</span>, <span class="kw">null</span>, <span class="str">'Definition'</span>)
+);</code></pre>
+
+      <h2 id="memo">memo</h2>
+      <p>Wraps a functional component and skips re-renders when props are shallowly equal. Pass a custom comparator as the second argument for fine-grained control.</p>
+      <pre><code><span class="kw">import</span> { memo } <span class="kw">from</span> <span class="str">'flexui'</span>;
+
+<span class="kw">const</span> <span class="cls">Row</span> = <span class="fn">memo</span>(<span class="kw">function</span> <span class="fn">Row</span>({ data }) {
+  <span class="kw">return</span> <span class="fn">createElement</span>(<span class="str">'tr'</span>, <span class="kw">null</span>, ...);
+});
+
+<span class="cmt">// Custom comparator</span>
+<span class="kw">const</span> <span class="cls">StableRow</span> = <span class="fn">memo</span>(Row, (prev, next) => prev.data.id === next.data.id);</code></pre>
+
+      <h2 id="lazy">lazy</h2>
+      <p>Dynamically imports a component on first render. Must be wrapped in <code>&lt;Suspense&gt;</code>.</p>
+      <pre><code><span class="kw">import</span> { lazy } <span class="kw">from</span> <span class="str">'flexui'</span>;
+<span class="kw">import</span> { Suspense } <span class="kw">from</span> <span class="str">'flexui/components'</span>;
+
+<span class="kw">const</span> <span class="cls">Chart</span> = <span class="fn">lazy</span>(() => <span class="kw">import</span>(<span class="str">'./Chart.js'</span>));
+
+<span class="fn">createElement</span>(Suspense, { fallback: <span class="fn">createElement</span>(<span class="str">'span'</span>, <span class="kw">null</span>, <span class="str">'Loading…'</span>) },
+  <span class="fn">createElement</span>(<span class="cls">Chart</span>, { data })
+);</code></pre>
+
+      <h2 id="context">createContext</h2>
+      <p>Creates a context object. The <code>Provider</code> component broadcasts a value; <code>useContext</code> reads it anywhere in the subtree.</p>
+      <pre><code><span class="kw">import</span> { createContext } <span class="kw">from</span> <span class="str">'flexui'</span>;
+<span class="kw">import</span> { useContext } <span class="kw">from</span> <span class="str">'flexui/hooks'</span>;
+
+<span class="kw">const</span> <span class="cls">ThemeCtx</span> = <span class="fn">createContext</span>(<span class="str">'light'</span>);
+
+<span class="cmt">// Provider</span>
+<span class="fn">createElement</span>(ThemeCtx.Provider, { value: <span class="str">'dark'</span> }, children);
+
+<span class="cmt">// Consumer</span>
+<span class="kw">function</span> <span class="fn">ThemedBtn</span>() {
+  <span class="kw">const</span> theme = <span class="fn">useContext</span>(ThemeCtx);
+  <span class="kw">return</span> <span class="fn">createElement</span>(<span class="str">'button'</span>, { className: <span class="str">`btn--</span><span class="prop">${theme}</span><span class="str">`</span> }, <span class="str">'Click'</span>);
+}</code></pre>
+
+      <h2 id="forwardref">forwardRef</h2>
+      <p>Lets a component receive a <code>ref</code> from its parent and forward it to a DOM node or child component.</p>
+      <pre><code><span class="kw">import</span> { forwardRef, useRef } <span class="kw">from</span> <span class="str">'flexui'</span>;
+
+<span class="kw">const</span> <span class="cls">FancyInput</span> = <span class="fn">forwardRef</span>(<span class="kw">function</span>(props, ref) {
+  <span class="kw">return</span> <span class="fn">createElement</span>(<span class="str">'input'</span>, { ...props, ref, className: <span class="str">'fancy-input'</span> });
+});
+
+<span class="cmt">// Parent</span>
+<span class="kw">const</span> inputRef = <span class="fn">useRef</span>();
+<span class="fn">createElement</span>(<span class="cls">FancyInput</span>, { ref: inputRef, placeholder: <span class="str">'Type here'</span> });
+inputRef.current.<span class="fn">focus</span>(); <span class="cmt">// direct DOM access</span></code></pre>
+    </div>
+  </main>
+</div>
+<script src="nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hooks — FlexUI Docs</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="site-header">
+  <button class="header-icon-btn menu-btn" id="menu-btn" title="Toggle sidebar" aria-label="Toggle sidebar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+  <a href="index.html" class="header-logo"><div class="logo-mark"></div>FlexUI</a>
+  <span class="header-version">v1.1.3</span>
+  <div class="header-spacer"></div>
+  <button class="header-icon-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle theme"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2a6 6 0 1 0 8 8 4.5 4.5 0 0 1-8-8z"/></svg></button>
+</header>
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="main">
+    <div class="page-content">
+      <h1 class="page-title">Hooks</h1>
+      <p class="page-desc">Hooks let functional components use state, side effects, and other framework features without writing a class. All hooks follow the same rules as React hooks.</p>
+
+      <div class="callout warning">
+        <span class="callout-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2L1 14h14z"/><path d="M8 6v4M8 11v1"/></svg></span>
+        <div class="callout-content">
+          <div class="callout-title">Rules of Hooks</div>
+          Only call hooks at the top level of a function component or custom hook. Never inside conditions, loops, or nested functions.
+        </div>
+      </div>
+
+      <div class="on-page-toc">
+        <div class="on-page-toc-title">On this page</div>
+        <a href="#usestate">useState</a>
+        <a href="#usereducer">useReducer</a>
+        <a href="#useeffect">useEffect</a>
+        <a href="#uselayouteffect">useLayoutEffect</a>
+        <a href="#useref">useRef</a>
+        <a href="#usememo">useMemo</a>
+        <a href="#usecallback">useCallback</a>
+        <a href="#usecontext">useContext</a>
+        <a href="#useid">useId</a>
+        <a href="#useimperativehandle">useImperativeHandle</a>
+      </div>
+
+      <h2 id="usestate">useState</h2>
+      <p>Adds local state to a functional component. Returns the current value and a setter function.</p>
+      <pre><code><span class="kw">const</span> [state, setState] = <span class="fn">useState</span>(initialState)</code></pre>
+      <pre><code><span class="kw">import</span> { useState } <span class="kw">from</span> <span class="str">'flexui'</span>;
+
+<span class="kw">function</span> <span class="fn">Toggle</span>() {
+  <span class="kw">const</span> [on, setOn] = <span class="fn">useState</span>(<span class="kw">false</span>);
+  <span class="kw">return</span> <span class="fn">createElement</span>(<span class="str">'button'</span>, { onClick: () => <span class="fn">setOn</span>(v => !v) },
+    on ? <span class="str">'ON'</span> : <span class="str">'OFF'</span>
+  );
+}
+
+<span class="cmt">// Functional initializer (runs only once)</span>
+<span class="kw">const</span> [items, setItems] = <span class="fn">useState</span>(() => <span class="fn">loadFromStorage</span>());</code></pre>
+
+      <h2 id="usereducer">useReducer</h2>
+      <p>An alternative to <code>useState</code> for complex state logic. Accepts a reducer and an initial state.</p>
+      <pre><code><span class="kw">const</span> [state, dispatch] = <span class="fn">useReducer</span>(reducer, initialArg, init?)</code></pre>
+      <pre><code><span class="kw">import</span> { useReducer } <span class="kw">from</span> <span class="str">'flexui'</span>;
+
+<span class="kw">function</span> <span class="fn">reducer</span>(state, action) {
+  <span class="kw">switch</span> (action.type) {
+    <span class="kw">case</span> <span class="str">'increment'</span>: <span class="kw">return</span> { count: state.count + <span class="num">1</span> };
+    <span class="kw">case</span> <span class="str">'reset'</span>:     <span class="kw">return</span> { count: <span class="num">0</span> };
+    <span class="kw">default</span>:          <span class="kw">return</span> state;
+  }
+}
+
+<span class="kw">function</span> <span class="fn">Counter</span>() {
+  <span class="kw">const</span> [state, dispatch] = <span class="fn">useReducer</span>(reducer, { count: <span class="num">0</span> });
+  <span class="kw">return</span> <span class="fn">createElement</span>(<span class="str">'div'</span>, <span class="kw">null</span>,
+    <span class="fn">createElement</span>(<span class="str">'p'</span>, <span class="kw">null</span>, state.count),
+    <span class="fn">createElement</span>(<span class="str">'button'</span>, { onClick: () => <span class="fn">dispatch</span>({ type: <span class="str">'increment'</span> }) }, <span class="str">'+'</span>),
+    <span class="fn">createElement</span>(<span class="str">'button'</span>, { onClick: () => <span class="fn">dispatch</span>({ type: <span class="str">'reset'</span> }) }, <span class="str">'Reset'</span>),
+  );
+}</code></pre>
+
+      <h2 id="useeffect">useEffect</h2>
+      <p>Runs a side effect after the browser has painted. Return a cleanup function to run on unmount or before the next effect.</p>
+      <pre><code><span class="fn">useEffect</span>(effect, deps?)</code></pre>
+      <pre><code><span class="kw">import</span> { useEffect } <span class="kw">from</span> <span class="str">'flexui'</span>;
+
+<span class="cmt">// Runs after every render</span>
+<span class="fn">useEffect</span>(() => { document.title = title; });
+
+<span class="cmt">// Runs once on mount</span>
+<span class="fn">useEffect</span>(() => {
+  <span class="kw">const</span> id = <span class="fn">setInterval</span>(tick, <span class="num">1000</span>);
+  <span class="kw">return</span> () => <span class="fn">clearInterval</span>(id); <span class="cmt">// cleanup</span>
+}, []);
+
+<span class="cmt">// Runs when `userId` changes</span>
+<span class="fn">useEffect</span>(() => {
+  <span class="fn">fetchUser</span>(userId).<span class="fn">then</span>(setUser);
+}, [userId]);</code></pre>
+
+      <h2 id="uselayouteffect">useLayoutEffect</h2>
+      <p>Identical to <code>useEffect</code> but fires synchronously after DOM mutations and before the browser paints. Use sparingly — prefer <code>useEffect</code>.</p>
+      <pre><code><span class="fn">useLayoutEffect</span>(() => {
+  <span class="cmt">// Measure DOM before paint</span>
+  <span class="kw">const</span> { height } = ref.current.<span class="fn">getBoundingClientRect</span>();
+  <span class="fn">setHeight</span>(height);
+}, []);</code></pre>
+
+      <h2 id="useref">useRef</h2>
+      <p>Returns a mutable ref object whose <code>.current</code> property persists across renders without triggering a re-render. Commonly used to hold a DOM node reference.</p>
+      <pre><code><span class="kw">const</span> ref = <span class="fn">useRef</span>(initialValue)</code></pre>
+      <pre><code><span class="kw">import</span> { useRef, useEffect } <span class="kw">from</span> <span class="str">'flexui'</span>;
+
+<span class="kw">function</span> <span class="fn">FocusInput</span>() {
+  <span class="kw">const</span> inputRef = <span class="fn">useRef</span>(<span class="kw">null</span>);
+
+  <span class="fn">useEffect</span>(() => { inputRef.current.<span class="fn">focus</span>(); }, []);
+
+  <span class="kw">return</span> <span class="fn">createElement</span>(<span class="str">'input'</span>, { ref: inputRef });
+}</code></pre>
+
+      <h2 id="usememo">useMemo</h2>
+      <p>Memoizes a computed value. Re-computes only when dependencies change.</p>
+      <pre><code><span class="kw">const</span> value = <span class="fn">useMemo</span>(() => <span class="fn">expensiveCalc</span>(a, b), [a, b]);</code></pre>
+      <div class="callout tip">
+        <span class="callout-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a4 4 0 0 1 1.5 7.7V12H6.5V9.7A4 4 0 0 1 8 2z"/><path d="M6.5 13.5h3M7 15h2"/></svg></span>
+        <div class="callout-content">
+          <div class="callout-title">Only memoize expensive work</div>
+          Don't wrap every computation in <code>useMemo</code>. The overhead of tracking dependencies adds up — only use it for genuinely expensive operations or to preserve reference identity.
+        </div>
+      </div>
+
+      <h2 id="usecallback">useCallback</h2>
+      <p>Returns a memoized callback function. Equivalent to <code>useMemo(() => fn, deps)</code>.</p>
+      <pre><code><span class="kw">const</span> handleClick = <span class="fn">useCallback</span>(() => {
+  <span class="fn">doSomething</span>(id);
+}, [id]);</code></pre>
+
+      <h2 id="usecontext">useContext</h2>
+      <p>Reads and subscribes to a context value. The component re-renders when the context value changes.</p>
+      <pre><code><span class="kw">const</span> value = <span class="fn">useContext</span>(MyContext);</code></pre>
+      <pre><code><span class="kw">import</span> { useContext } <span class="kw">from</span> <span class="str">'flexui'</span>;
+<span class="kw">import</span> { ThemeCtx } <span class="kw">from</span> <span class="str">'../context/theme.js'</span>;
+
+<span class="kw">function</span> <span class="fn">ThemeLabel</span>() {
+  <span class="kw">const</span> theme = <span class="fn">useContext</span>(ThemeCtx);
+  <span class="kw">return</span> <span class="fn">createElement</span>(<span class="str">'span'</span>, <span class="kw">null</span>, <span class="str">`Theme: </span><span class="prop">${theme}</span><span class="str">`</span>);
+}</code></pre>
+
+      <h2 id="useid">useId</h2>
+      <p>Generates a stable, unique ID that is consistent between server and client renders. Useful for accessible form labels.</p>
+      <pre><code><span class="kw">import</span> { useId } <span class="kw">from</span> <span class="str">'flexui'</span>;
+
+<span class="kw">function</span> <span class="fn">FormField</span>({ label }) {
+  <span class="kw">const</span> id = <span class="fn">useId</span>();
+  <span class="kw">return</span> <span class="fn">createElement</span>(<span class="str">'div'</span>, <span class="kw">null</span>,
+    <span class="fn">createElement</span>(<span class="str">'label'</span>, { htmlFor: id }, label),
+    <span class="fn">createElement</span>(<span class="str">'input'</span>, { id })
+  );
+}</code></pre>
+
+      <h2 id="useimperativehandle">useImperativeHandle</h2>
+      <p>Customizes the instance value exposed to parent components via <code>ref</code>. Use with <code>forwardRef</code>.</p>
+      <pre><code><span class="fn">useImperativeHandle</span>(ref, createHandle, deps?)</code></pre>
+      <pre><code><span class="kw">const</span> <span class="cls">Dialog</span> = <span class="fn">forwardRef</span>(<span class="kw">function</span>(props, ref) {
+  <span class="kw">const</span> [open, setOpen] = <span class="fn">useState</span>(<span class="kw">false</span>);
+
+  <span class="fn">useImperativeHandle</span>(ref, () => ({
+    show: () => <span class="fn">setOpen</span>(<span class="kw">true</span>),
+    hide: () => <span class="fn">setOpen</span>(<span class="kw">false</span>),
+  }), []);
+
+  <span class="kw">return</span> open ? <span class="fn">createElement</span>(<span class="str">'dialog'</span>, { open }, props.children) : <span class="kw">null</span>;
+});
+
+<span class="cmt">// Parent calls dialogRef.current.show()</span></code></pre>
+    </div>
+  </main>
+</div>
+<script src="nav.js"></script>
+</body>
+</html>

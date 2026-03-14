@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Built-in Components — FlexUI Docs</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="site-header">
+  <button class="header-icon-btn menu-btn" id="menu-btn" title="Toggle sidebar" aria-label="Toggle sidebar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+  <a href="index.html" class="header-logo"><div class="logo-mark"></div>FlexUI</a>
+  <span class="header-version">v1.1.3</span>
+  <div class="header-spacer"></div>
+  <button class="header-icon-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle theme"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2a6 6 0 1 0 8 8 4.5 4.5 0 0 1-8-8z"/></svg></button>
+</header>
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="main">
+    <div class="page-content">
+      <h1 class="page-title">Built-in Components</h1>
+      <p class="page-desc">FlexUI ships a small set of utility components in <code>flexui/components</code> for common UI patterns: error boundaries, suspense, portals, modals, conditional rendering, and list rendering.</p>
+
+      <div class="on-page-toc">
+        <div class="on-page-toc-title">On this page</div>
+        <a href="#errorboundary">ErrorBoundary</a>
+        <a href="#suspense">Suspense</a>
+        <a href="#portal">Portal</a>
+        <a href="#modal">Modal</a>
+        <a href="#show">Show</a>
+        <a href="#for">For</a>
+        <a href="#transition">Transition</a>
+      </div>
+
+      <h2 id="errorboundary">ErrorBoundary</h2>
+      <p>Catches JavaScript errors thrown anywhere in the child component tree and renders a fallback UI instead of crashing the page.</p>
+      <pre><code><span class="kw">import</span> { ErrorBoundary } <span class="kw">from</span> <span class="str">'flexui/components'</span>;
+
+<span class="fn">createElement</span>(ErrorBoundary, {
+  fallback: (error) => <span class="fn">createElement</span>(<span class="str">'p'</span>, { style: { color: <span class="str">'red'</span> } }, error.message),
+  onError:  (err, info) => <span class="fn">logToSentry</span>(err, info),
+},
+  <span class="fn">createElement</span>(RiskyComponent, <span class="kw">null</span>)
+);</code></pre>
+
+      <h3>ErrorBoundary Props</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>fallback</code></td><td><code>Element | (error) =&gt; Element</code></td><td>UI to render on error. Receives the error object if a function.</td></tr>
+            <tr><td><code>onError</code></td><td><code>(error, info) =&gt; void</code></td><td>Called when a child throws. Use for logging.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="suspense">Suspense</h2>
+      <p>Shows a fallback while a lazily-loaded component is being fetched. Works with <code>lazy()</code>.</p>
+      <pre><code><span class="kw">import</span> { lazy } <span class="kw">from</span> <span class="str">'flexui'</span>;
+<span class="kw">import</span> { Suspense } <span class="kw">from</span> <span class="str">'flexui/components'</span>;
+
+<span class="kw">const</span> <span class="cls">BigMap</span> = <span class="fn">lazy</span>(() => <span class="kw">import</span>(<span class="str">'./BigMap.js'</span>));
+
+<span class="fn">createElement</span>(Suspense, {
+  fallback: <span class="fn">createElement</span>(<span class="str">'div'</span>, { className: <span class="str">'skeleton'</span> }, <span class="str">'Loading map…'</span>)
+},
+  <span class="fn">createElement</span>(<span class="cls">BigMap</span>, { center: [0, 0] })
+);</code></pre>
+
+      <h2 id="portal">Portal</h2>
+      <p>Renders children into a different DOM node, outside the current component tree. Useful for modals and tooltips.</p>
+      <pre><code><span class="kw">import</span> { Portal } <span class="kw">from</span> <span class="str">'flexui/components'</span>;
+
+<span class="cmt">// Renders into document.body by default</span>
+<span class="fn">createElement</span>(Portal, <span class="kw">null</span>,
+  <span class="fn">createElement</span>(<span class="str">'div'</span>, { className: <span class="str">'tooltip'</span> }, <span class="str">'I am in &lt;body&gt;!'</span>)
+);
+
+<span class="cmt">// Custom target (CSS selector or DOM element)</span>
+<span class="fn">createElement</span>(Portal, { target: <span class="str">'#modal-root'</span> },
+  <span class="fn">createElement</span>(MyModal, <span class="kw">null</span>)
+);</code></pre>
+
+      <h2 id="modal">Modal</h2>
+      <p>A fully accessible dialog with keyboard handling (Escape to close) and portal rendering.</p>
+      <pre><code><span class="kw">import</span> { Modal } <span class="kw">from</span> <span class="str">'flexui/components'</span>;
+
+<span class="kw">const</span> [open, setOpen] = <span class="fn">useState</span>(<span class="kw">false</span>);
+
+<span class="fn">createElement</span>(Modal, {
+  isOpen:  open,
+  onClose: () => <span class="fn">setOpen</span>(<span class="kw">false</span>),
+  title:   <span class="str">'Confirm Delete'</span>,
+},
+  <span class="fn">createElement</span>(<span class="str">'p'</span>, <span class="kw">null</span>, <span class="str">'Are you sure? This cannot be undone.'</span>),
+  <span class="fn">createElement</span>(<span class="str">'button'</span>, { onClick: handleDelete }, <span class="str">'Delete'</span>),
+);</code></pre>
+
+      <h3>Modal Props</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>isOpen</code></td><td><code>boolean</code></td><td>Controls visibility</td></tr>
+            <tr><td><code>onClose</code></td><td><code>() =&gt; void</code></td><td>Called on backdrop click or Escape key</td></tr>
+            <tr><td><code>title</code></td><td><code>string</code></td><td>Used for <code>aria-label</code> on the dialog</td></tr>
+            <tr><td><code>className</code></td><td><code>string</code></td><td>Additional CSS class on the dialog element</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="show">Show</h2>
+      <p>Conditionally renders children based on a <code>when</code> prop. Cleaner than inline ternaries for complex conditional trees.</p>
+      <pre><code><span class="kw">import</span> { Show } <span class="kw">from</span> <span class="str">'flexui/components'</span>;
+
+<span class="fn">createElement</span>(Show, {
+  when:     isLoggedIn,
+  fallback: <span class="fn">createElement</span>(LoginButton, <span class="kw">null</span>),
+},
+  <span class="fn">createElement</span>(UserAvatar, { user })
+);</code></pre>
+
+      <h2 id="for">For</h2>
+      <p>Renders a keyed list from an array. Handles the <code>key</code> prop automatically using the item index or a custom key function.</p>
+      <pre><code><span class="kw">import</span> { For } <span class="kw">from</span> <span class="str">'flexui/components'</span>;
+
+<span class="fn">createElement</span>(For, {
+  each:   products,
+  key:    (item) => item.id,
+  render: (item) => <span class="fn">createElement</span>(ProductCard, { product: item }),
+  empty:  <span class="fn">createElement</span>(<span class="str">'p'</span>, <span class="kw">null</span>, <span class="str">'No products found.'</span>),
+});</code></pre>
+
+      <h2 id="transition">Transition</h2>
+      <p>Applies CSS class transitions when a component enters or leaves the DOM.</p>
+      <pre><code><span class="kw">import</span> { Transition } <span class="kw">from</span> <span class="str">'flexui/components'</span>;
+
+<span class="fn">createElement</span>(Transition, {
+  show:       visible,
+  enterClass: <span class="str">'fade-enter'</span>,
+  leaveClass: <span class="str">'fade-leave'</span>,
+  duration:   <span class="num">300</span>,
+},
+  <span class="fn">createElement</span>(<span class="str">'div'</span>, { className: <span class="str">'panel'</span> }, <span class="str">'Content'</span>)
+);</code></pre>
+    </div>
+  </main>
+</div>
+<script src="nav.js"></script>
+</body>
+</html>

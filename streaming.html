@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Streaming & Islands — FlexUI Docs</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="site-header">
+  <button class="header-icon-btn menu-btn" id="menu-btn" title="Toggle sidebar" aria-label="Toggle sidebar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+  <a href="index.html" class="header-logo"><div class="logo-mark"></div>FlexUI</a>
+  <span class="header-version">v1.1.3</span>
+  <div class="header-spacer"></div>
+  <button class="header-icon-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle theme"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2a6 6 0 1 0 8 8 4.5 4.5 0 0 1-8-8z"/></svg></button>
+</header>
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="main">
+    <div class="page-content">
+      <h1 class="page-title">Streaming &amp; Partial Hydration</h1>
+      <p class="page-desc">Streaming SSR flushes the HTML shell immediately and sends deferred content as it resolves. Partial hydration (Islands) lets you hydrate only the interactive parts of a page.</p>
+
+      <div class="on-page-toc">
+        <div class="on-page-toc-title">On this page</div>
+        <a href="#streaming-ssr">Streaming SSR</a>
+        <a href="#renderstreaming">renderStreaming</a>
+        <a href="#islands">Island Architecture</a>
+        <a href="#island-component">Island Component</a>
+        <a href="#hydrateislands">hydrateIslands</a>
+      </div>
+
+      <h2 id="streaming-ssr">Streaming SSR</h2>
+      <p>Traditional SSR waits for all data before sending HTML. Streaming SSR sends the page shell immediately, then streams deferred chunks as async operations complete. This dramatically reduces Time To First Byte (TTFB).</p>
+
+      <div class="callout info">
+        <span class="callout-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 7v4M8 5v.5"/></svg></span>
+        <div class="callout-content">
+          <div class="callout-title">Requires a streaming-capable server</div>
+          Use <code>renderToStream</code> or <code>renderStreaming</code> with Node.js HTTP, Deno, or any runtime that supports <code>ReadableStream</code>.
+        </div>
+      </div>
+
+      <h2 id="renderstreaming">renderStreaming</h2>
+      <p>Returns a <code>ReadableStream</code> that flushes the shell immediately and injects deferred content via inline <code>&lt;script&gt;</code> chunks as Suspense boundaries resolve.</p>
+      <pre><code><span class="kw">import</span> { renderStreaming } <span class="kw">from</span> <span class="str">'flexui/server'</span>;
+
+<span class="kw">export async function</span> <span class="fn">handler</span>(req, res) {
+  <span class="kw">const</span> stream = <span class="fn">renderStreaming</span>(
+    <span class="fn">createElement</span>(App, { url: req.url })
+  );
+
+  res.setHeader(<span class="str">'Content-Type'</span>, <span class="str">'text/html'</span>);
+  res.setHeader(<span class="str">'Transfer-Encoding'</span>, <span class="str">'chunked'</span>);
+
+  <span class="kw">const</span> reader = stream.<span class="fn">getReader</span>();
+  <span class="kw">while</span> (<span class="kw">true</span>) {
+    <span class="kw">const</span> { done, value } = <span class="kw">await</span> reader.<span class="fn">read</span>();
+    <span class="kw">if</span> (done) <span class="kw">break</span>;
+    res.<span class="fn">write</span>(value);
+  }
+  res.<span class="fn">end</span>();
+}</code></pre>
+
+      <h3>Streaming with Suspense</h3>
+      <p>Wrap slow data-fetching components in <code>Suspense</code>. The shell renders immediately; deferred content streams in when ready.</p>
+      <pre><code><span class="fn">createElement</span>(Suspense, { fallback: <span class="fn">createElement</span>(Skeleton, <span class="kw">null</span>) },
+  <span class="fn">createElement</span>(SlowDataComponent, <span class="kw">null</span>)
+)</code></pre>
+
+      <h2 id="islands">Island Architecture</h2>
+      <p>For mostly-static pages, you can skip hydrating the entire page. Instead, mark only interactive components as <strong>Islands</strong> — only they receive JavaScript on the client. Everything else stays as plain HTML.</p>
+
+      <p>This delivers the fastest possible page load: static HTML with targeted interactivity.</p>
+
+      <pre><code><span class="cmt">Static HTML shell   ──── sent immediately, no JS needed
+       │
+       ├── 🏝 Island: &lt;SearchBar /&gt;   ← hydrated
+       ├── 🏝 Island: &lt;VideoPlayer /&gt; ← hydrated
+       └── Everything else             ← static, zero JS cost</span></code></pre>
+
+      <h2 id="island-component">Island Component</h2>
+      <p>Wrap any interactive component in <code>&lt;Island&gt;</code>. The server renders it to HTML; the client hydrates only that subtree.</p>
+      <div class="code-block">
+        <span class="code-label">pages/index.js (SSG/SSR)</span>
+        <pre><code><span class="kw">import</span> { createElement } <span class="kw">from</span> <span class="str">'flexui'</span>;
+<span class="kw">import</span> { Island } <span class="kw">from</span> <span class="str">'flexui/server'</span>;
+<span class="kw">import</span> SearchBar <span class="kw">from</span> <span class="str">'../components/SearchBar.js'</span>;
+
+<span class="kw">export default function</span> <span class="fn">HomePage</span>() {
+  <span class="kw">return</span> <span class="fn">createElement</span>(<span class="str">'main'</span>, <span class="kw">null</span>,
+    <span class="fn">createElement</span>(<span class="str">'h1'</span>, <span class="kw">null</span>, <span class="str">'Welcome'</span>),          <span class="cmt">// static</span>
+    <span class="fn">createElement</span>(<span class="str">'p'</span>, <span class="kw">null</span>, <span class="str">'Lots of static content...'</span>), <span class="cmt">// static</span>
+    <span class="fn">createElement</span>(Island, { component: SearchBar, props: { placeholder: <span class="str">'Search'</span> } })
+    <span class="cmt">// ↑ only this gets hydrated client-side</span>
+  );
+}</code></pre>
+      </div>
+
+      <h2 id="hydrateislands">hydrateIslands</h2>
+      <p>Call this once in your client entry point. It scans the DOM for island markers and hydrates each one independently.</p>
+      <div class="code-block">
+        <span class="code-label">src/main.js (client)</span>
+        <pre><code><span class="kw">import</span> { hydrateIslands } <span class="kw">from</span> <span class="str">'flexui/server'</span>;
+
+<span class="cmt">// Pass a map of component name → component module</span>
+<span class="fn">hydrateIslands</span>({
+  SearchBar: () => <span class="kw">import</span>(<span class="str">'./components/SearchBar.js'</span>),
+  VideoPlayer: () => <span class="kw">import</span>(<span class="str">'./components/VideoPlayer.js'</span>),
+});</code></pre>
+      </div>
+
+      <div class="callout tip">
+        <span class="callout-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a4 4 0 0 1 1.5 7.7V12H6.5V9.7A4 4 0 0 1 8 2z"/><path d="M6.5 13.5h3M7 15h2"/></svg></span>
+        <div class="callout-content">
+          <div class="callout-title">Islands ship zero JS by default</div>
+          Components not wrapped in <code>&lt;Island&gt;</code> ship no JavaScript to the browser. Use islands only for genuinely interactive components — forms, media players, live data feeds.
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="nav.js"></script>
+</body>
+</html>

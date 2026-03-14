@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Virtual DOM — FlexUI Docs</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="site-header">
+  <button class="header-icon-btn menu-btn" id="menu-btn" title="Toggle sidebar" aria-label="Toggle sidebar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+  <a href="index.html" class="header-logo"><div class="logo-mark"></div>FlexUI</a>
+  <span class="header-version">v1.1.3</span>
+  <div class="header-spacer"></div>
+  <button class="header-icon-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle theme"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2a6 6 0 1 0 8 8 4.5 4.5 0 0 1-8-8z"/></svg></button>
+</header>
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="main">
+    <div class="page-content">
+      <h1 class="page-title">Virtual DOM</h1>
+      <p class="page-desc">FlexUI maintains a lightweight virtual DOM tree in memory. On each render it diffs the new tree against the previous one and applies only the minimal set of DOM mutations needed.</p>
+
+      <div class="on-page-toc">
+        <div class="on-page-toc-title">On this page</div>
+        <a href="#how-it-works">How It Works</a>
+        <a href="#diffing">Diffing Algorithm</a>
+        <a href="#keys">Keys</a>
+        <a href="#events">Event System</a>
+        <a href="#isvalidelement">isValidElement</a>
+      </div>
+
+      <h2 id="how-it-works">How It Works</h2>
+      <p>Every call to <code>createElement</code> returns a plain JavaScript object called a <strong>FlexElement</strong>:</p>
+      <pre><code>{
+  $$typeof: Symbol(FlexElement),
+  type:     <span class="str">'button'</span>,
+  key:      <span class="kw">null</span>,
+  ref:      <span class="kw">null</span>,
+  props: {
+    className: <span class="str">'btn'</span>,
+    onClick:   [Function],
+    children:  <span class="str">'Click me'</span>,
+  },
+}</code></pre>
+      <p>These objects are cheap to create and never touch the real DOM directly. The renderer compares the new virtual tree to the previous one and generates a minimal list of patch operations.</p>
+
+      <h2 id="diffing">Diffing Algorithm</h2>
+      <p>FlexUI uses a two-phase diff:</p>
+      <ol>
+        <li><strong>Type check</strong> — if the element type changed (e.g. <code>'div'</code> → <code>'span'</code>), the old node is unmounted and a new one is mounted.</li>
+        <li><strong>Props diff</strong> — for elements of the same type, only changed attributes and event handlers are updated.</li>
+        <li><strong>Children diff</strong> — children are reconciled by index, or by <code>key</code> if provided (see below).</li>
+      </ol>
+
+      <p>The patch applicator then makes the minimal number of DOM calls: <code>setAttribute</code>, <code>removeAttribute</code>, <code>addEventListener</code>, <code>removeChild</code>, <code>appendChild</code>, etc.</p>
+
+      <h2 id="keys">Keys</h2>
+      <p>When rendering lists, provide a stable <code>key</code> prop so FlexUI can match old and new nodes correctly. Without keys, all items after a deletion or insertion are unnecessarily updated.</p>
+
+      <div class="callout danger">
+        <span class="callout-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M4.5 4.5l7 7"/></svg></span>
+        <div class="callout-content">
+          <div class="callout-title">Never use array index as key for dynamic lists</div>
+          If items can be reordered, added, or removed, using the array index as a key causes incorrect reconciliation — state is carried over to the wrong elements.
+        </div>
+      </div>
+
+      <pre><code><span class="cmt">// ✗ Bad — index key causes bugs on reorder/delete</span>
+items.<span class="fn">map</span>((item, i) => <span class="fn">createElement</span>(<span class="cls">Row</span>, { key: i }, item.name));
+
+<span class="cmt">// ✓ Good — stable ID from data</span>
+items.<span class="fn">map</span>(item => <span class="fn">createElement</span>(<span class="cls">Row</span>, { key: item.id }, item.name));</code></pre>
+
+      <h2 id="events">Event System</h2>
+      <p>FlexUI uses <strong>event delegation</strong> rather than attaching individual listeners to every DOM node. A single listener is registered on the root container for each event type. When an event fires, it bubbles up to the root and FlexUI dispatches it through the virtual tree.</p>
+
+      <p>All event handlers receive a <code>SyntheticEvent</code> — a normalized wrapper that irons out cross-browser differences and ensures consistent behaviour.</p>
+
+      <pre><code><span class="fn">createElement</span>(<span class="str">'input'</span>, {
+  onChange: (e) => {
+    <span class="cmt">// e is a SyntheticEvent</span>
+    console.<span class="fn">log</span>(e.target.value);
+    e.<span class="fn">stopPropagation</span>();  <span class="cmt">// works as expected</span>
+    e.<span class="fn">preventDefault</span>();   <span class="cmt">// works as expected</span>
+  }
+});</code></pre>
+
+      <h3>Supported Event Props</h3>
+      <p>All standard DOM events are supported using camelCase prop names: <code>onClick</code>, <code>onChange</code>, <code>onInput</code>, <code>onSubmit</code>, <code>onKeyDown</code>, <code>onKeyUp</code>, <code>onFocus</code>, <code>onBlur</code>, <code>onMouseEnter</code>, <code>onMouseLeave</code>, <code>onScroll</code>, and many more.</p>
+
+      <h2 id="isvalidelement">isValidElement</h2>
+      <p>Returns <code>true</code> if the value is a FlexElement (created by <code>createElement</code>).</p>
+      <pre><code><span class="kw">import</span> { isValidElement } <span class="kw">from</span> <span class="str">'flexui'</span>;
+
+<span class="fn">isValidElement</span>(<span class="fn">createElement</span>(<span class="str">'div'</span>, <span class="kw">null</span>))  <span class="cmt">// → true</span>
+<span class="fn">isValidElement</span>(<span class="str">'hello'</span>)                    <span class="cmt">// → false</span>
+<span class="fn">isValidElement</span>(<span class="kw">null</span>)                       <span class="cmt">// → false</span></code></pre>
+    </div>
+  </main>
+</div>
+<script src="nav.js"></script>
+</body>
+</html>

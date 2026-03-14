@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Git Setup — FlexUI Docs</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="site-header">
+  <button class="header-icon-btn menu-btn" id="menu-btn" title="Toggle sidebar" aria-label="Toggle sidebar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+  <a href="index.html" class="header-logo"><div class="logo-mark"></div>FlexUI</a>
+  <span class="header-version">v1.1.3</span>
+  <div class="header-spacer"></div>
+  <button class="header-icon-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle theme"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2a6 6 0 1 0 8 8 4.5 4.5 0 0 1-8-8z"/></svg></button>
+</header>
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="main">
+    <div class="page-content">
+      <h1 class="page-title">Git Setup</h1>
+      <p class="page-desc">How to initialise a Git repository for FlexUI, configure a remote on GitHub, set up a proper <code>.gitignore</code>, and establish a release tagging workflow.</p>
+
+      <div class="on-page-toc">
+        <div class="on-page-toc-title">On this page</div>
+        <a href="#init">Initialise Repository</a>
+        <a href="#gitignore">.gitignore</a>
+        <a href="#remote">Add Remote</a>
+        <a href="#branching">Branch Strategy</a>
+        <a href="#tags">Release Tags</a>
+        <a href="#commitlint">Commit Conventions</a>
+      </div>
+
+      <h2 id="init">Initialise Repository</h2>
+      <ol class="steps">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Initialise git in your project root</div>
+            <pre><code>cd flexui
+git init
+git add .
+git commit -m "chore: initial commit"</code></pre>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Create a repository on GitHub</div>
+            <p>Go to <a href="https://github.com/new" target="_blank">github.com/new</a>. Set visibility, add a description, and leave the "Initialize repository" option unchecked (you already have local files).</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Add the remote and push</div>
+            <pre><code>git remote add origin https://github.com/fluxenite/flexui.git
+git branch -M main
+git push -u origin main</code></pre>
+          </div>
+        </li>
+      </ol>
+
+      <h2 id="gitignore">.gitignore</h2>
+      <p>Keep your repository clean by excluding build artifacts, caches, and environment files:</p>
+      <div class="code-block">
+        <span class="code-label">.gitignore</span>
+        <pre><code><span class="cmt"># Dependencies</span>
+node_modules/
+
+<span class="cmt"># Build output</span>
+dist/
+.flexui-cache/
+
+<span class="cmt"># OS / Editor</span>
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+<span class="cmt"># Environment secrets</span>
+.env
+.env.local
+.env.*.local
+
+<span class="cmt"># Logs</span>
+*.log
+npm-debug.log*
+
+<span class="cmt"># Coverage</span>
+coverage/
+.nyc_output/</code></pre>
+      </div>
+
+      <h2 id="remote">Add Remote</h2>
+      <p>If you already have a local repo and want to add or change the remote:</p>
+      <pre><code><span class="cmt"># View current remotes</span>
+git remote -v
+
+<span class="cmt"># Add a new remote</span>
+git remote add origin https://github.com/fluxenite/flexui.git
+
+<span class="cmt"># Change existing remote URL</span>
+git remote set-url origin https://github.com/fluxenite/flexui.git
+
+<span class="cmt"># Use SSH instead of HTTPS</span>
+git remote set-url origin git@github.com:fluxenite/flexui.git</code></pre>
+
+      <h2 id="branching">Branch Strategy</h2>
+      <p>The recommended branching model for open-source packages:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Branch</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>main</code></td><td>Stable, production-ready code. Protected.</td></tr>
+            <tr><td><code>dev</code></td><td>Integration branch for features before release.</td></tr>
+            <tr><td><code>feat/&lt;name&gt;</code></td><td>New feature branches — merge into <code>dev</code>.</td></tr>
+            <tr><td><code>fix/&lt;name&gt;</code></td><td>Bug fix branches — merge into <code>dev</code> or <code>main</code>.</td></tr>
+            <tr><td><code>release/&lt;version&gt;</code></td><td>Staging branch for release preparation.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre><code><span class="cmt"># Create and switch to a feature branch</span>
+git checkout -b feat/streaming-ssr
+
+<span class="cmt"># Merge back to dev</span>
+git checkout dev
+git merge feat/streaming-ssr --no-ff
+git push</code></pre>
+
+      <h2 id="tags">Release Tags</h2>
+      <p>Tag each release with a version number. Tags trigger the npm publish workflow and provide a clear history of releases.</p>
+      <pre><code><span class="cmt"># Annotated tag (recommended)</span>
+git tag -a v1.1.3 -m "Release v1.1.3"
+git push origin v1.1.3
+
+<span class="cmt"># Push all tags at once</span>
+git push origin --tags
+
+<span class="cmt"># List existing tags</span>
+git tag --list
+
+<span class="cmt"># Delete a tag (if you made a mistake)</span>
+git tag -d v1.1.3
+git push origin --delete v1.1.3</code></pre>
+
+      <h2 id="commitlint">Commit Conventions</h2>
+      <p>FlexUI follows the <a href="https://www.conventionalcommits.org/" target="_blank">Conventional Commits</a> specification. This enables automated changelogs and semantic versioning.</p>
+      <pre><code><span class="str">feat</span>: add streaming SSR support
+<span class="str">fix</span>: resolve memory leak in scheduler
+<span class="str">docs</span>: update router API reference
+<span class="str">chore</span>: bump esbuild to 0.21
+<span class="str">refactor</span>: simplify virtual DOM diffing
+<span class="str">test</span>: add hooks integration tests
+<span class="str">perf</span>: reduce bundle size by 8%
+<span class="str">BREAKING CHANGE</span>: remove deprecated render() API</code></pre>
+
+      <div class="callout tip">
+        <span class="callout-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a4 4 0 0 1 1.5 7.7V12H6.5V9.7A4 4 0 0 1 8 2z"/><path d="M6.5 13.5h3M7 15h2"/></svg></span>
+        <div class="callout-content">
+          <div class="callout-title">Automate changelog generation</div>
+          Tools like <a href="https://github.com/conventional-changelog/conventional-changelog" target="_blank">conventional-changelog</a> or <a href="https://github.com/release-drafter/release-drafter" target="_blank">release-drafter</a> can auto-generate your <code>CHANGELOG.md</code> from commit messages.
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="nav.js"></script>
+</body>
+</html>

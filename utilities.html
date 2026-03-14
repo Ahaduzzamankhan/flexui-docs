@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Utility Functions — FlexUI Docs</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="site-header">
+  <button class="header-icon-btn menu-btn" id="menu-btn" title="Toggle sidebar" aria-label="Toggle sidebar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+  <a href="index.html" class="header-logo"><div class="logo-mark"></div>FlexUI</a>
+  <span class="header-version">v1.1.3</span>
+  <div class="header-spacer"></div>
+  <button class="header-icon-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle theme"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2a6 6 0 1 0 8 8 4.5 4.5 0 0 1-8-8z"/></svg></button>
+</header>
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="main">
+    <div class="page-content">
+      <h1 class="page-title">Utility Functions</h1>
+      <p class="page-desc">FlexUI ships a set of small, tree-shakeable utility functions for class names, objects, strings, async, and URLs. Import only what you use.</p>
+
+      <pre><code><span class="kw">import</span> { cx, debounce, slugify } <span class="kw">from</span> <span class="str">'flexui/utils'</span>;</code></pre>
+
+      <div class="on-page-toc">
+        <div class="on-page-toc-title">On this page</div>
+        <a href="#cx">cx — classNames</a>
+        <a href="#objects">Object Utilities</a>
+        <a href="#functions">Function Utilities</a>
+        <a href="#strings">String Utilities</a>
+        <a href="#urls">URL Utilities</a>
+        <a href="#async">Async Utilities</a>
+      </div>
+
+      <h2 id="cx">cx — Class Names</h2>
+      <p>Conditionally join CSS class names. Accepts strings, objects, arrays, and falsy values.</p>
+      <pre><code><span class="kw">import</span> { cx } <span class="kw">from</span> <span class="str">'flexui/utils'</span>;
+
+<span class="fn">cx</span>(<span class="str">'btn'</span>, isActive &amp;&amp; <span class="str">'btn--active'</span>, { <span class="str">'btn--lg'</span>: large })
+<span class="cmt">// → 'btn btn--active btn--lg'</span>
+
+<span class="fn">cx</span>(<span class="str">'card'</span>, <span class="kw">null</span>, <span class="kw">undefined</span>, <span class="str">'card--dark'</span>)
+<span class="cmt">// → 'card card--dark'</span></code></pre>
+
+      <h2 id="objects">Object Utilities</h2>
+
+      <h3>deepClone(obj)</h3>
+      <p>Returns a deep copy of an object, array, or Date. Does not clone class instances.</p>
+      <pre><code><span class="kw">const</span> copy = <span class="fn">deepClone</span>({ a: { b: [<span class="num">1</span>, <span class="num">2</span>] } });
+<span class="cmt">// copy.a !== original.a  →  true</span></code></pre>
+
+      <h3>pick(obj, keys)</h3>
+      <p>Returns a new object with only the specified keys.</p>
+      <pre><code><span class="fn">pick</span>({ a: <span class="num">1</span>, b: <span class="num">2</span>, c: <span class="num">3</span> }, [<span class="str">'a'</span>, <span class="str">'c'</span>])  <span class="cmt">// → { a: 1, c: 3 }</span></code></pre>
+
+      <h3>omit(obj, keys)</h3>
+      <p>Returns a new object with the specified keys removed.</p>
+      <pre><code><span class="fn">omit</span>({ a: <span class="num">1</span>, b: <span class="num">2</span>, c: <span class="num">3</span> }, [<span class="str">'b'</span>])  <span class="cmt">// → { a: 1, c: 3 }</span></code></pre>
+
+      <h3>shallowEqual(a, b)</h3>
+      <p>Returns <code>true</code> if two objects have the same top-level keys and values.</p>
+      <pre><code><span class="fn">shallowEqual</span>({ x: <span class="num">1</span> }, { x: <span class="num">1</span> })  <span class="cmt">// → true</span></code></pre>
+
+      <h2 id="functions">Function Utilities</h2>
+
+      <h3>debounce(fn, delay)</h3>
+      <p>Returns a debounced version of <code>fn</code>. Call <code>.cancel()</code> to clear the pending timer.</p>
+      <pre><code><span class="kw">const</span> debouncedSearch = <span class="fn">debounce</span>(fetchResults, <span class="num">300</span>);
+debouncedSearch.<span class="fn">cancel</span>();</code></pre>
+
+      <h3>throttle(fn, interval)</h3>
+      <p>Returns a throttled version of <code>fn</code> — calls at most once per <code>interval</code> milliseconds.</p>
+      <pre><code><span class="kw">const</span> throttledScroll = <span class="fn">throttle</span>(handleScroll, <span class="num">100</span>);</code></pre>
+
+      <h3>once(fn)</h3>
+      <p>Returns a function that invokes <code>fn</code> exactly once and returns the same result on subsequent calls.</p>
+      <pre><code><span class="kw">const</span> init = <span class="fn">once</span>(heavySetup);</code></pre>
+
+      <h3>memoize(fn)</h3>
+      <p>Caches results by serialized arguments. Best for pure functions with serializable inputs.</p>
+      <pre><code><span class="kw">const</span> memoFib = <span class="fn">memoize</span>((n) => n &lt;= <span class="num">1</span> ? n : <span class="fn">memoFib</span>(n-<span class="num">1</span>) + <span class="fn">memoFib</span>(n-<span class="num">2</span>));</code></pre>
+
+      <h2 id="strings">String Utilities</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Function</th><th>Example</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td><code>capitalize(str)</code></td><td><code>capitalize('hello')</code></td><td><code>'Hello'</code></td></tr>
+            <tr><td><code>camelToKebab(str)</code></td><td><code>camelToKebab('myVar')</code></td><td><code>'my-var'</code></td></tr>
+            <tr><td><code>kebabToCamel(str)</code></td><td><code>kebabToCamel('my-var')</code></td><td><code>'myVar'</code></td></tr>
+            <tr><td><code>truncate(str, len, suffix?)</code></td><td><code>truncate('Hello World', 8)</code></td><td><code>'Hello...'</code></td></tr>
+            <tr><td><code>slugify(str)</code></td><td><code>slugify('Hello World!')</code></td><td><code>'hello-world'</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="urls">URL Utilities</h2>
+
+      <h3>joinPaths(...parts)</h3>
+      <pre><code><span class="fn">joinPaths</span>(<span class="str">'/blog'</span>, <span class="str">'2025'</span>, <span class="str">'my-post'</span>)  <span class="cmt">// → '/blog/2025/my-post'</span></code></pre>
+
+      <h3>parseQuery(search)</h3>
+      <pre><code><span class="fn">parseQuery</span>(<span class="str">'?q=flex&amp;page=2'</span>)  <span class="cmt">// → { q: 'flex', page: '2' }</span></code></pre>
+
+      <h3>stringifyQuery(params)</h3>
+      <pre><code><span class="fn">stringifyQuery</span>({ q: <span class="str">'flex'</span>, page: <span class="num">2</span> })  <span class="cmt">// → 'q=flex&amp;page=2'</span></code></pre>
+
+      <h2 id="async">Async Utilities</h2>
+
+      <h3>sleep(ms)</h3>
+      <p>Returns a promise that resolves after <code>ms</code> milliseconds.</p>
+      <pre><code><span class="kw">await</span> <span class="fn">sleep</span>(<span class="num">500</span>); <span class="cmt">// pause 500ms</span></code></pre>
+
+      <h3>retry(fn, options)</h3>
+      <p>Retries an async function with exponential backoff until it resolves or exhausts attempts.</p>
+      <pre><code><span class="kw">const</span> data = <span class="kw">await</span> <span class="fn">retry</span>(
+  () => <span class="fn">fetch</span>(<span class="str">'/api/data'</span>).<span class="fn">then</span>(r => r.<span class="fn">json</span>()),
+  { attempts: <span class="num">3</span>, delay: <span class="num">500</span> }
+);</code></pre>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Option</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>attempts</code></td><td><code>3</code></td><td>Maximum number of tries</td></tr>
+            <tr><td><code>delay</code></td><td><code>500</code></td><td>Base delay in ms (doubles each retry)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="nav.js"></script>
+</body>
+</html>

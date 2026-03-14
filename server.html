@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dev & Prod Server — FlexUI Docs</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="site-header">
+  <button class="header-icon-btn menu-btn" id="menu-btn" title="Toggle sidebar" aria-label="Toggle sidebar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+  <a href="index.html" class="header-logo"><div class="logo-mark"></div>FlexUI</a>
+  <span class="header-version">v1.1.3</span>
+  <div class="header-spacer"></div>
+  <button class="header-icon-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle theme"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2a6 6 0 1 0 8 8 4.5 4.5 0 0 1-8-8z"/></svg></button>
+</header>
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="main">
+    <div class="page-content">
+      <h1 class="page-title">Dev &amp; Production Server</h1>
+      <p class="page-desc">FlexUI provides a fully-featured HMR development server and a production SSR HTTP server, both accessible via the CLI or the programmatic API.</p>
+
+      <div class="on-page-toc">
+        <div class="on-page-toc-title">On this page</div>
+        <a href="#devserver">Dev Server</a>
+        <a href="#devserver-api">startDevServer API</a>
+        <a href="#prodserver">Production Server</a>
+        <a href="#prodserver-api">startProdServer API</a>
+        <a href="#static">Static Files</a>
+        <a href="#middleware">Custom Middleware</a>
+      </div>
+
+      <h2 id="devserver">Dev Server</h2>
+      <p>The dev server handles esbuild rebuilds, WebSocket HMR, and static asset serving. Start it via the CLI:</p>
+      <pre><code>flexui dev --port 3000 --open</code></pre>
+      <p>Or programmatically:</p>
+      <pre><code><span class="kw">import</span> { startDevServer } <span class="kw">from</span> <span class="str">'flexui/server'</span>;
+<span class="kw">import</span> { loadConfig } <span class="kw">from</span> <span class="str">'flexui/build'</span>;
+
+<span class="kw">const</span> config = <span class="kw">await</span> <span class="fn">loadConfig</span>(process.<span class="fn">cwd</span>());
+<span class="kw">const</span> { server, close } = <span class="kw">await</span> <span class="fn">startDevServer</span>({ ...config, port: <span class="num">3000</span> });
+
+console.<span class="fn">log</span>(<span class="str">'Dev server running on http://localhost:3000'</span>);
+
+<span class="cmt">// Graceful shutdown</span>
+process.<span class="fn">on</span>(<span class="str">'SIGINT'</span>, () => <span class="fn">close</span>());</code></pre>
+
+      <h2 id="devserver-api">startDevServer API</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Option</th><th>Type</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>port</code></td><td><code>number</code></td><td>HTTP port (default: <code>3000</code>)</td></tr>
+            <tr><td><code>host</code></td><td><code>string</code></td><td>Interface to bind (default: <code>'localhost'</code>)</td></tr>
+            <tr><td><code>entry</code></td><td><code>string</code></td><td>Client entry point</td></tr>
+            <tr><td><code>publicDir</code></td><td><code>string</code></td><td>Static assets directory</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Returns:</strong> <code>{ server: http.Server, wss: WebSocketServer, close: () =&gt; void }</code></p>
+
+      <h2 id="prodserver">Production Server</h2>
+      <p>The production SSR server handles incoming HTTP requests, calls <code>getServerSideProps</code>, renders to HTML, and streams the response. Start via CLI after a build:</p>
+      <pre><code>flexui build --ssr
+flexui start --port 8080</code></pre>
+
+      <h2 id="prodserver-api">startProdServer API</h2>
+      <pre><code><span class="kw">import</span> { startProdServer } <span class="kw">from</span> <span class="str">'flexui/server'</span>;
+
+<span class="kw">const</span> { server } = <span class="kw">await</span> <span class="fn">startProdServer</span>({
+  distDir:    <span class="str">'dist'</span>,
+  port:       <span class="num">8080</span>,
+  host:       <span class="str">'0.0.0.0'</span>,
+});</code></pre>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Option</th><th>Type</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>distDir</code></td><td><code>string</code></td><td>Path to the build output directory</td></tr>
+            <tr><td><code>port</code></td><td><code>number</code></td><td>HTTP port</td></tr>
+            <tr><td><code>host</code></td><td><code>string</code></td><td>Bind address. Use <code>'0.0.0.0'</code> to accept external connections.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="static">Static Files</h2>
+      <p>Both servers serve files from <code>publicDir</code> with correct MIME types and cache headers:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File type</th><th>Cache-Control header</th></tr></thead>
+          <tbody>
+            <tr><td>Hashed JS/CSS bundles</td><td><code>public, max-age=31536000, immutable</code></td></tr>
+            <tr><td>HTML files</td><td><code>no-cache</code></td></tr>
+            <tr><td>Images, fonts</td><td><code>public, max-age=86400</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="middleware">Custom Middleware</h2>
+      <p>If you need to add custom request handling (authentication, rate-limiting, logging), integrate FlexUI's SSR renderer into your own HTTP server:</p>
+      <pre><code><span class="kw">import</span> http <span class="kw">from</span> <span class="str">'node:http'</span>;
+<span class="kw">import</span> { renderToString } <span class="kw">from</span> <span class="str">'flexui/server'</span>;
+<span class="kw">import</span> App <span class="kw">from</span> <span class="str">'./src/App.js'</span>;
+
+http.<span class="fn">createServer</span>(<span class="kw">async</span> (req, res) => {
+  <span class="cmt">// Your middleware logic here</span>
+  <span class="kw">if</span> (req.url === <span class="str">'/healthz'</span>) {
+    res.<span class="fn">end</span>(<span class="str">'ok'</span>); <span class="kw">return</span>;
+  }
+
+  <span class="kw">const</span> html = <span class="kw">await</span> <span class="fn">renderToString</span>(<span class="fn">createElement</span>(App, { url: req.url }));
+  res.setHeader(<span class="str">'Content-Type'</span>, <span class="str">'text/html'</span>);
+  res.<span class="fn">end</span>(<span class="str">`&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;body&gt;</span><span class="prop">${html}</span><span class="str">&lt;/body&gt;&lt;/html&gt;`</span>);
+}).<span class="fn">listen</span>(<span class="num">3000</span>);</code></pre>
+    </div>
+  </main>
+</div>
+<script src="nav.js"></script>
+</body>
+</html>

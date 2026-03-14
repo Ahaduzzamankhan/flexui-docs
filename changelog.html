@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Changelog — FlexUI Docs</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="site-header">
+  <button class="header-icon-btn menu-btn" id="menu-btn" title="Toggle sidebar" aria-label="Toggle sidebar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+  <a href="index.html" class="header-logo"><div class="logo-mark"></div>FlexUI</a>
+  <span class="header-version">v1.1.3</span>
+  <div class="header-spacer"></div>
+  <button class="header-icon-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle theme"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2a6 6 0 1 0 8 8 4.5 4.5 0 0 1-8-8z"/></svg></button>
+</header>
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="main">
+    <div class="page-content">
+      <h1 class="page-title">Changelog</h1>
+      <p class="page-desc">All notable changes to FlexUI. This project follows <a href="https://semver.org/" target="_blank">Semantic Versioning</a>.</p>
+
+      <hr />
+
+      <h2 id="v1-0-0">v1.1.3 <span class="badge badge-green">latest</span> <span style="font-size:13px;color:var(--text-3);font-weight:400;margin-left:8px;">2026-03-14</span></h2>
+      <p>Initial public release of FlexUI by Fluxenite.</p>
+
+      <h3>Core</h3>
+      <ul>
+        <li><code>createElement</code>, <code>Fragment</code>, <code>cloneElement</code>, <code>isValidElement</code></li>
+        <li><code>jsx</code> / <code>jsxs</code> / <code>jsxDEV</code> runtime for Babel/esbuild automatic JSX transform</li>
+        <li><code>Component</code> and <code>PureComponent</code> base classes</li>
+        <li><code>memo</code>, <code>lazy</code>, <code>createContext</code>, <code>forwardRef</code></li>
+        <li>Cooperative scheduler with 5 priority levels and frame-budget yielding</li>
+        <li><code>flushSync</code>, <code>batchUpdates</code></li>
+      </ul>
+
+      <h3>Hooks</h3>
+      <ul>
+        <li><code>useState</code>, <code>useReducer</code></li>
+        <li><code>useEffect</code>, <code>useLayoutEffect</code></li>
+        <li><code>useMemo</code>, <code>useCallback</code></li>
+        <li><code>useRef</code>, <code>useContext</code>, <code>useId</code>, <code>useImperativeHandle</code></li>
+      </ul>
+
+      <h3>Virtual DOM</h3>
+      <ul>
+        <li>Full virtual DOM diffing with index-based and key-based reconciliation</li>
+        <li>Patch applicator for minimal DOM mutations</li>
+        <li>Synthetic event system with normalized <code>SyntheticEvent</code></li>
+        <li>Event delegation on root container</li>
+      </ul>
+
+      <h3>Rendering</h3>
+      <ul>
+        <li>CSR: <code>createRoot</code>, <code>hydrateRoot</code>, legacy <code>render</code></li>
+        <li>SSR: <code>renderToString</code>, <code>renderToStream</code>, <code>renderToDocument</code></li>
+        <li>SSG: <code>generateStaticSite</code> with <code>getStaticProps</code> / <code>getStaticPaths</code></li>
+        <li>Streaming: <code>renderStreaming</code> with deferred chunk injection</li>
+        <li>Partial Hydration: <code>Island</code> component + <code>hydrateIslands</code> client runtime</li>
+      </ul>
+
+      <h3>Router</h3>
+      <ul>
+        <li>File-based route manifest builder with static, dynamic, and catch-all segments</li>
+        <li>Client router using <code>history.pushState</code> and popstate</li>
+        <li><code>useRouter</code>, <code>useParams</code>, <code>useSearchParams</code></li>
+        <li><code>&lt;Link&gt;</code> with prefetch-on-hover</li>
+        <li><code>&lt;NavLink&gt;</code> with automatic active class</li>
+      </ul>
+
+      <h3>SEO</h3>
+      <ul>
+        <li><code>&lt;Head&gt;</code> component for CSR and SSR</li>
+        <li><code>openGraph()</code>, <code>twitterCard()</code> helpers</li>
+        <li><code>jsonLD()</code> and schema helpers: <code>articleSchema</code>, <code>websiteSchema</code>, <code>breadcrumbSchema</code>, <code>faqSchema</code>, <code>productSchema</code></li>
+        <li><code>generateSitemap()</code> with image support, <code>generateSitemapIndex()</code></li>
+        <li><code>generateRobots()</code> with per-agent rules</li>
+      </ul>
+
+      <h3>Server</h3>
+      <ul>
+        <li>esbuild-powered HMR dev server with WebSocket</li>
+        <li>Error overlay injected in browser on build failure</li>
+        <li>Production SSR HTTP server with <code>getServerSideProps</code> support</li>
+        <li>Static file serving with correct MIME types and cache headers</li>
+      </ul>
+
+      <h3>Build</h3>
+      <ul>
+        <li>esbuild bundler with code splitting, tree-shaking, and minification</li>
+        <li>Asset manifest output (<code>asset-manifest.json</code>)</li>
+        <li><code>defineConfig</code> helper with deep-merge and path resolution</li>
+      </ul>
+
+      <h3>CLI</h3>
+      <ul>
+        <li><code>flexui create &lt;name&gt;</code> — scaffold default, ssr, or ssg projects</li>
+        <li><code>flexui dev</code> — start HMR dev server</li>
+        <li><code>flexui build</code> — production build with <code>--ssg</code> and <code>--ssr</code> flags</li>
+        <li><code>flexui start</code> — start production SSR server</li>
+        <li><code>flexui generate sitemap</code> — generate sitemap.xml</li>
+        <li><code>flexui generate robots</code> — generate robots.txt</li>
+      </ul>
+
+      <h3>Components</h3>
+      <ul>
+        <li><code>ErrorBoundary</code>, <code>Suspense</code>, <code>Portal</code></li>
+        <li><code>Modal</code>, <code>Show</code>, <code>For</code>, <code>Transition</code></li>
+      </ul>
+
+      <h3>Utilities</h3>
+      <ul>
+        <li><code>cx</code> — conditional class names</li>
+        <li><code>deepClone</code>, <code>pick</code>, <code>omit</code>, <code>shallowEqual</code></li>
+        <li><code>debounce</code>, <code>throttle</code>, <code>once</code>, <code>memoize</code></li>
+        <li><code>capitalize</code>, <code>camelToKebab</code>, <code>kebabToCamel</code>, <code>truncate</code>, <code>slugify</code></li>
+        <li><code>joinPaths</code>, <code>parseQuery</code>, <code>stringifyQuery</code></li>
+        <li><code>sleep</code>, <code>retry</code></li>
+      </ul>
+
+      <h3>TypeScript</h3>
+      <ul>
+        <li>Full type definitions: <code>FlexElement</code>, <code>FC</code>, <code>Component</code>, <code>FlexContext</code>, <code>RouterState</code>, <code>FlexUIConfig</code></li>
+        <li>All hook types, router types, and SEO types included</li>
+      </ul>
+
+    </div>
+  </main>
+</div>
+<script src="nav.js"></script>
+</body>
+</html>

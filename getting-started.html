@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quick Start — FlexUI Docs</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <button class="header-icon-btn menu-btn" id="menu-btn" title="Toggle sidebar" aria-label="Toggle sidebar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+  <a href="index.html" class="header-logo"><div class="logo-mark"></div>FlexUI</a>
+  <span class="header-version">v1.1.3</span>
+  <div class="header-spacer"></div>
+  <button class="header-icon-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle theme"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2a6 6 0 1 0 8 8 4.5 4.5 0 0 1-8-8z"/></svg></button>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="main">
+    <div class="page-content">
+
+      <h1 class="page-title">Quick Start</h1>
+      <p class="page-desc">Get from zero to a running FlexUI application in under five minutes.</p>
+
+      <div class="on-page-toc">
+        <div class="on-page-toc-title">On this page</div>
+        <a href="#requirements">Requirements</a>
+        <a href="#install-cli">Install CLI</a>
+        <a href="#create-project">Create a Project</a>
+        <a href="#first-component">Your First Component</a>
+        <a href="#dev-workflow">Dev Workflow</a>
+        <a href="#production">Production Build</a>
+      </div>
+
+      <h2 id="requirements">Requirements</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Requirement</th><th>Version</th></tr></thead>
+          <tbody>
+            <tr><td>Node.js</td><td>≥ 18.0.0</td></tr>
+            <tr><td>npm</td><td>≥ 9.0.0</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="install-cli">Install the CLI</h2>
+      <pre><code>npm install -g @fluxeniteb/flexui</code></pre>
+      <p>Verify the install:</p>
+      <pre><code>flexui --version
+# flexui/1.1.3</code></pre>
+
+      <h2 id="create-project">Create a Project</h2>
+      <p>Scaffold a new app with the <code>create</code> command:</p>
+      <pre><code><span class="cmt"># Default (CSR / SPA)</span>
+flexui create my-app
+
+<span class="cmt"># SSR project</span>
+flexui create my-app -t ssr
+
+<span class="cmt"># SSG project</span>
+flexui create my-app -t ssg
+
+<span class="cmt"># TypeScript</span>
+flexui create my-app --ts</code></pre>
+
+      <p>Install dependencies and start:</p>
+      <pre><code>cd my-app
+npm install
+npm run dev</code></pre>
+
+      <p>Open <strong>http://localhost:3000</strong> — you should see the FlexUI welcome page with HMR active.</p>
+
+      <h2 id="first-component">Your First Component</h2>
+      <p>Create a new file at <code>pages/hello.js</code>:</p>
+
+      <div class="code-block">
+        <span class="code-label">pages/hello.js</span>
+        <pre><code><span class="kw">import</span> { createElement, useState } <span class="kw">from</span> <span class="str">'flexui'</span>;
+
+<span class="kw">export default function</span> <span class="fn">HelloPage</span>() {
+  <span class="kw">const</span> [name, setName] = <span class="fn">useState</span>(<span class="str">'World'</span>);
+
+  <span class="kw">return</span> <span class="fn">createElement</span>(<span class="str">'div'</span>, { className: <span class="str">'page'</span> },
+    <span class="fn">createElement</span>(<span class="str">'h1'</span>, <span class="kw">null</span>, <span class="str">`Hello, </span><span class="prop">${name}</span><span class="str">!`</span>),
+    <span class="fn">createElement</span>(<span class="str">'input'</span>, {
+      value: name,
+      onInput: e => <span class="fn">setName</span>(e.target.value),
+      placeholder: <span class="str">'Enter your name'</span>,
+    })
+  );
+}</code></pre>
+      </div>
+
+      <p>Navigate to <code>http://localhost:3000/hello</code> — the file router picks it up automatically.</p>
+
+      <div class="callout tip">
+        <span class="callout-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a4 4 0 0 1 1.5 7.7V12H6.5V9.7A4 4 0 0 1 8 2z"/><path d="M6.5 13.5h3M7 15h2"/></svg></span>
+        <div class="callout-content">
+          <div class="callout-title">JSX Support</div>
+          Configure esbuild or Babel with <code>jsxImportSource: 'flexui'</code> to use JSX syntax instead of <code>createElement</code> calls.
+        </div>
+      </div>
+
+      <h2 id="dev-workflow">Dev Workflow</h2>
+      <p>The dev server provides instant feedback:</p>
+      <ul>
+        <li><strong>HMR</strong> — modules are hot-replaced without full page reload.</li>
+        <li><strong>Error overlay</strong> — build errors appear as a browser overlay with source location.</li>
+        <li><strong>File watcher</strong> — powered by <code>chokidar</code>, changes are picked up immediately.</li>
+      </ul>
+
+      <pre><code><span class="cmt"># Custom port</span>
+flexui dev --port 4000
+
+<span class="cmt"># Open browser on start</span>
+flexui dev --open</code></pre>
+
+      <h2 id="production">Production Build</h2>
+      <pre><code><span class="cmt"># Standard CSR build</span>
+npm run build
+
+<span class="cmt"># SSG build (pre-renders all pages)</span>
+flexui build --ssg
+
+<span class="cmt"># SSR build</span>
+flexui build --ssr</code></pre>
+
+      <p>Output is written to the <code>dist/</code> directory. Start the production server:</p>
+      <pre><code>flexui start</code></pre>
+
+      <div class="callout warning">
+        <span class="callout-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2L1 14h14z"/><path d="M8 6v4M8 11v1"/></svg></span>
+        <div class="callout-content">
+          <div class="callout-title">Node.js for SSR</div>
+          The production SSR server requires a Node.js environment. For pure SSG output, you can host the <code>dist/</code> folder on any static host.
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="nav.js"></script>
+</body>
+</html>

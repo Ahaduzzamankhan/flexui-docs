@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Build System — FlexUI Docs</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="site-header">
+  <button class="header-icon-btn menu-btn" id="menu-btn" title="Toggle sidebar" aria-label="Toggle sidebar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+  <a href="index.html" class="header-logo"><div class="logo-mark"></div>FlexUI</a>
+  <span class="header-version">v1.1.3</span>
+  <div class="header-spacer"></div>
+  <button class="header-icon-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle theme"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2a6 6 0 1 0 8 8 4.5 4.5 0 0 1-8-8z"/></svg></button>
+</header>
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="main">
+    <div class="page-content">
+      <h1 class="page-title">Build System</h1>
+      <p class="page-desc">FlexUI uses <a href="https://esbuild.github.io/" target="_blank">esbuild</a> as its bundler — delivering sub-second builds with code splitting, tree-shaking, and automatic asset hashing.</p>
+
+      <div class="on-page-toc">
+        <div class="on-page-toc-title">On this page</div>
+        <a href="#pipeline">Build Pipeline</a>
+        <a href="#codesplitting">Code Splitting</a>
+        <a href="#treeshaking">Tree Shaking</a>
+        <a href="#assetmanifest">Asset Manifest</a>
+        <a href="#hmr">HMR Dev Server</a>
+        <a href="#targets">Browser Targets</a>
+      </div>
+
+      <h2 id="pipeline">Build Pipeline</h2>
+      <p>Running <code>flexui build</code> executes the following steps:</p>
+      <ol>
+        <li>Load <code>flexui.config.js</code> via <code>defineConfig</code></li>
+        <li>Resolve all page entry points from <code>pagesDir</code></li>
+        <li>Bundle with esbuild — code splitting at dynamic <code>import()</code> boundaries</li>
+        <li>Hash output filenames for cache-busting</li>
+        <li>Write <code>asset-manifest.json</code> mapping source paths to output paths</li>
+        <li>If <code>ssg: true</code>, pre-render each page route to static HTML</li>
+        <li>Copy <code>publicDir</code> files to <code>outDir</code></li>
+      </ol>
+
+      <h2 id="codesplitting">Code Splitting</h2>
+      <p>FlexUI automatically splits bundles at every dynamic <code>import()</code> call. This includes:</p>
+      <ul>
+        <li>Components wrapped in <code>lazy()</code></li>
+        <li>Manual <code>import('...')</code> calls in your code</li>
+        <li>Route components loaded by the file router</li>
+      </ul>
+      <pre><code><span class="cmt">// Each of these creates a separate chunk</span>
+<span class="kw">const</span> <span class="cls">Dashboard</span> = <span class="fn">lazy</span>(() => <span class="kw">import</span>(<span class="str">'./pages/Dashboard.js'</span>));
+<span class="kw">const</span> chart = <span class="kw">await import</span>(<span class="str">'./lib/chart.js'</span>);</code></pre>
+
+      <h2 id="treeshaking">Tree Shaking</h2>
+      <p>esbuild's tree-shaker removes any exports that are never imported. This applies to FlexUI's own modules — if you don't use <code>generateSitemap</code>, it won't appear in your bundle.</p>
+
+      <div class="callout tip">
+        <span class="callout-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a4 4 0 0 1 1.5 7.7V12H6.5V9.7A4 4 0 0 1 8 2z"/><path d="M6.5 13.5h3M7 15h2"/></svg></span>
+        <div class="callout-content">
+          <div class="callout-title">Side-effect free</div>
+          FlexUI's source modules have no top-level side effects, which means esbuild can aggressively eliminate unused exports. Keep your own modules side-effect free for best results.
+        </div>
+      </div>
+
+      <h2 id="assetmanifest">Asset Manifest</h2>
+      <p>After a build, <code>dist/asset-manifest.json</code> maps source entry points to their hashed output paths:</p>
+      <pre><code>{
+  <span class="prop">"src/main.js"</span>:              <span class="str">"static/js/main.a3f9c.js"</span>,
+  <span class="prop">"pages/index.js"</span>:          <span class="str">"static/js/pages/index.b7d21.js"</span>,
+  <span class="prop">"pages/blog/[slug].js"</span>:    <span class="str">"static/js/pages/blog/slug.cc410.js"</span>
+}</code></pre>
+      <p>Use the manifest in your SSR server to inject the correct script tags:</p>
+      <pre><code><span class="kw">import</span> manifest <span class="kw">from</span> <span class="str">'../dist/asset-manifest.json'</span> <span class="kw">assert</span> { type: <span class="str">'json'</span> };
+<span class="kw">const</span> mainBundle = manifest[<span class="str">'src/main.js'</span>];</code></pre>
+
+      <h2 id="hmr">HMR Dev Server</h2>
+      <p>The dev server rebuilds only changed modules using esbuild's incremental API and pushes updates to the browser via WebSocket.</p>
+      <pre><code><span class="cmt">// Injected into every page by the dev server</span>
+<span class="kw">const</span> ws = <span class="kw">new</span> <span class="cls">WebSocket</span>(<span class="str">'ws://localhost:3000/__hmr'</span>);
+ws.<span class="fn">onmessage</span> = ({ data }) => {
+  <span class="kw">const</span> { type, path } = <span class="cls">JSON</span>.<span class="fn">parse</span>(data);
+  <span class="kw">if</span> (type === <span class="str">'update'</span>) <span class="fn">hotReplace</span>(path);
+  <span class="kw">if</span> (type === <span class="str">'reload'</span>)  location.<span class="fn">reload</span>();
+};</code></pre>
+
+      <p>Build errors are surfaced as a full-page error overlay with the source file and line number highlighted.</p>
+
+      <h2 id="targets">Browser Targets</h2>
+      <p>Control the output syntax and polyfills via the <code>target</code> config option. The value is passed directly to esbuild.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Preset</th><th>Config</th></tr></thead>
+          <tbody>
+            <tr><td>Modern browsers (2022+)</td><td><code>['es2022', 'chrome102', 'firefox102', 'safari16']</code></td></tr>
+            <tr><td>Balanced (default)</td><td><code>['es2020', 'chrome90', 'firefox90', 'safari14']</code></td></tr>
+            <tr><td>Wide compatibility</td><td><code>['es2018', 'chrome80', 'firefox78', 'safari13']</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="nav.js"></script>
+</body>
+</html>

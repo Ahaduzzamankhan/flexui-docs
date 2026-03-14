@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NPM Publishing — FlexUI Docs</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="site-header">
+  <button class="header-icon-btn menu-btn" id="menu-btn" title="Toggle sidebar" aria-label="Toggle sidebar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+  <a href="index.html" class="header-logo"><div class="logo-mark"></div>FlexUI</a>
+  <span class="header-version">v1.1.3</span>
+  <div class="header-spacer"></div>
+  <button class="header-icon-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle theme"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2a6 6 0 1 0 8 8 4.5 4.5 0 0 1-8-8z"/></svg></button>
+</header>
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="main">
+    <div class="page-content">
+      <h1 class="page-title">NPM Publishing</h1>
+      <p class="page-desc">How to configure and publish FlexUI (or your own FlexUI-based library) to the npm registry.</p>
+
+      <div class="on-page-toc">
+        <div class="on-page-toc-title">On this page</div>
+        <a href="#prerequisites">Prerequisites</a>
+        <a href="#packagejson">package.json Setup</a>
+        <a href="#npmignore">.npmignore</a>
+        <a href="#login">Login &amp; Publish</a>
+        <a href="#versioning">Versioning</a>
+        <a href="#automation">Automated Releases</a>
+        <a href="#scoped">Scoped Packages</a>
+      </div>
+
+      <h2 id="prerequisites">Prerequisites</h2>
+      <ul>
+        <li>An npm account — create one at <a href="https://www.npmjs.com/signup" target="_blank">npmjs.com/signup</a></li>
+        <li>Node.js ≥ 18 and npm ≥ 9</li>
+        <li>The package name must be unique on the registry (or scoped to your org)</li>
+      </ul>
+
+      <h2 id="packagejson">package.json Setup</h2>
+      <p>A well-configured <code>package.json</code> is required for the package to work correctly after installation.</p>
+      <div class="code-block">
+        <span class="code-label">package.json</span>
+        <pre><code>{
+  <span class="prop">"name"</span>: <span class="str">"flexui"</span>,
+  <span class="prop">"version"</span>: <span class="str">"1.0.0"</span>,
+  <span class="prop">"description"</span>: <span class="str">"A modern frontend framework by Fluxenite"</span>,
+  <span class="prop">"author"</span>: <span class="str">"Fluxenite &lt;fluxenieab@gmail.com&gt;"</span>,
+  <span class="prop">"license"</span>: <span class="str">"MIT"</span>,
+  <span class="prop">"type"</span>: <span class="str">"module"</span>,
+
+  <span class="cmt">// Entry points</span>
+  <span class="prop">"main"</span>: <span class="str">"./src/core/index.js"</span>,
+  <span class="prop">"exports"</span>: {
+    <span class="prop">"."</span>:             <span class="str">"./src/core/index.js"</span>,
+    <span class="prop">"./router"</span>:      <span class="str">"./src/router/index.js"</span>,
+    <span class="prop">"./seo"</span>:         <span class="str">"./src/seo/index.js"</span>,
+    <span class="prop">"./server"</span>:      <span class="str">"./src/server/index.js"</span>,
+    <span class="prop">"./hooks"</span>:       <span class="str">"./src/hooks/index.js"</span>,
+    <span class="prop">"./components"</span>:  <span class="str">"./src/components/index.js"</span>
+  },
+
+  <span class="cmt">// CLI binary</span>
+  <span class="prop">"bin"</span>: { <span class="prop">"flexui"</span>: <span class="str">"./src/cli/index.js"</span> },
+
+  <span class="cmt">// Files included in the published package</span>
+  <span class="prop">"files"</span>: [<span class="str">"src"</span>, <span class="str">"README.md"</span>, <span class="str">"CHANGELOG.md"</span>],
+
+  <span class="prop">"keywords"</span>: [<span class="str">"framework"</span>, <span class="str">"frontend"</span>, <span class="str">"ssr"</span>, <span class="str">"ssg"</span>, <span class="str">"fluxenite"</span>],
+  <span class="prop">"repository"</span>: {
+    <span class="prop">"type"</span>: <span class="str">"git"</span>,
+    <span class="prop">"url"</span>: <span class="str">"https://github.com/fluxenite/flexui.git"</span>
+  },
+  <span class="prop">"homepage"</span>: <span class="str">"https://flexui.dev"</span>,
+  <span class="prop">"bugs"</span>: <span class="str">"https://github.com/fluxenite/flexui/issues"</span>
+}</code></pre>
+      </div>
+
+      <div class="callout info">
+        <span class="callout-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 7v4M8 5v.5"/></svg></span>
+        <div class="callout-content">
+          <div class="callout-title">Use "files" instead of .npmignore</div>
+          The <code>files</code> field is a whitelist approach — only the listed paths are included. This is safer than <code>.npmignore</code> because new files won't accidentally be published.
+        </div>
+      </div>
+
+      <h2 id="npmignore">.npmignore</h2>
+      <p>If you prefer a blacklist, create a <code>.npmignore</code> file. It follows the same syntax as <code>.gitignore</code>.</p>
+      <div class="code-block">
+        <span class="code-label">.npmignore</span>
+        <pre><code>*.test.js
+*.spec.js
+__tests__/
+.cache/
+example/
+scripts/
+.github/
+tsconfig.json
+jest.config.*</code></pre>
+      </div>
+
+      <h2 id="login">Login &amp; Publish</h2>
+      <ol class="steps">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Log in to npm</div>
+            <pre><code>npm login</code></pre>
+            <p>You will be prompted for your username, password, and OTP (if 2FA is enabled).</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Dry run to verify what will be published</div>
+            <pre><code>npm publish --dry-run</code></pre>
+            <p>Review the file list. Make sure no secrets, test files, or large binaries are included.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Publish</div>
+            <pre><code>npm publish</code></pre>
+            <p>The package is now live at <code>https://www.npmjs.com/package/flexui</code>.</p>
+          </div>
+        </li>
+      </ol>
+
+      <h2 id="versioning">Versioning</h2>
+      <p>FlexUI follows <a href="https://semver.org" target="_blank">Semantic Versioning</a>. Use <code>npm version</code> to bump the version and automatically create a git tag.</p>
+      <pre><code><span class="cmt"># Bug fix</span>
+npm version patch   <span class="cmt"># 1.0.0 → 1.0.1</span>
+
+<span class="cmt"># New feature (backwards compatible)</span>
+npm version minor   <span class="cmt"># 1.0.0 → 1.1.0</span>
+
+<span class="cmt"># Breaking change</span>
+npm version major   <span class="cmt"># 1.0.0 → 2.0.0</span>
+
+<span class="cmt"># Then publish</span>
+npm publish</code></pre>
+
+      <h2 id="automation">Automated Releases (GitHub Actions)</h2>
+      <p>Automate publishing on every tagged commit with a GitHub Actions workflow:</p>
+      <div class="code-block">
+        <span class="code-label">.github/workflows/publish.yml</span>
+        <pre><code>name: Publish to npm
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+      - run: npm ci
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}</code></pre>
+      </div>
+      <p>Set <code>NPM_TOKEN</code> as a repository secret in <em>GitHub → Settings → Secrets → Actions</em>. Generate the token at <em>npmjs.com → Account → Access Tokens</em>.</p>
+
+      <h2 id="scoped">Scoped Packages</h2>
+      <p>Publish under your npm org or username with a scope to avoid name conflicts:</p>
+      <pre><code><span class="cmt">// package.json</span>
+{ "name": "@fluxenite/flexui" }
+
+<span class="cmt"># Publish public scoped package</span>
+npm publish --access public</code></pre>
+    </div>
+  </main>
+</div>
+<script src="nav.js"></script>
+</body>
+</html>

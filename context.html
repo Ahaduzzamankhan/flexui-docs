@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Context — FlexUI Docs</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="site-header">
+  <button class="header-icon-btn menu-btn" id="menu-btn" title="Toggle sidebar" aria-label="Toggle sidebar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+  <a href="index.html" class="header-logo"><div class="logo-mark"></div>FlexUI</a>
+  <span class="header-version">v1.1.3</span>
+  <div class="header-spacer"></div>
+  <button class="header-icon-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle theme"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2a6 6 0 1 0 8 8 4.5 4.5 0 0 1-8-8z"/></svg></button>
+</header>
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="main">
+    <div class="page-content">
+      <h1 class="page-title">Context</h1>
+      <p class="page-desc">Context provides a way to pass data through the component tree without manually threading props at every level. Use it for themes, auth, locale, and other global state.</p>
+
+      <div class="on-page-toc">
+        <div class="on-page-toc-title">On this page</div>
+        <a href="#createcontext">createContext</a>
+        <a href="#provider">Provider</a>
+        <a href="#consumer">useContext</a>
+        <a href="#pattern">Full Pattern</a>
+        <a href="#performance">Performance Notes</a>
+      </div>
+
+      <h2 id="createcontext">createContext</h2>
+      <p>Creates a context object with a default value used when no <code>Provider</code> is found above in the tree.</p>
+      <pre><code><span class="kw">const</span> MyCtx = <span class="fn">createContext</span>(defaultValue)</code></pre>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Property</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>MyCtx.Provider</code></td><td>Component that supplies a value to the subtree</td></tr>
+            <tr><td><code>MyCtx._currentValue</code></td><td>Current context value (internal)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="provider">Provider</h2>
+      <p>Wrap any part of the tree in a <code>Provider</code> to supply a value. All consumers in the subtree re-render when <code>value</code> changes.</p>
+      <pre><code><span class="fn">createElement</span>(MyCtx.Provider, { value: currentValue },
+  children
+)</code></pre>
+      <div class="callout info">
+        <span class="callout-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 7v4M8 5v.5"/></svg></span>
+        <div class="callout-content">
+          <div class="callout-title">Reference identity matters</div>
+          If you pass an object literal as <code>value</code>, it creates a new reference on every render, causing all consumers to re-render. Memoize the value object with <code>useMemo</code>.
+        </div>
+      </div>
+
+      <h2 id="consumer">useContext</h2>
+      <p>Reads the nearest <code>Provider</code> value above in the tree. Automatically subscribes to updates.</p>
+      <pre><code><span class="kw">const</span> value = <span class="fn">useContext</span>(MyCtx);</code></pre>
+
+      <h2 id="pattern">Full Pattern</h2>
+      <p>The recommended pattern is to encapsulate context creation, the provider, and custom hooks in a single module:</p>
+      <div class="code-block">
+        <span class="code-label">context/AuthContext.js</span>
+        <pre><code><span class="kw">import</span> { createContext, createElement } <span class="kw">from</span> <span class="str">'flexui'</span>;
+<span class="kw">import</span> { useContext, useState, useMemo } <span class="kw">from</span> <span class="str">'flexui/hooks'</span>;
+
+<span class="kw">const</span> <span class="cls">AuthCtx</span> = <span class="fn">createContext</span>(<span class="kw">null</span>);
+
+<span class="kw">export function</span> <span class="fn">AuthProvider</span>({ children }) {
+  <span class="kw">const</span> [user, setUser] = <span class="fn">useState</span>(<span class="kw">null</span>);
+
+  <span class="kw">const</span> value = <span class="fn">useMemo</span>(() => ({
+    user,
+    login:  (u) => <span class="fn">setUser</span>(u),
+    logout: () => <span class="fn">setUser</span>(<span class="kw">null</span>),
+  }), [user]);
+
+  <span class="kw">return</span> <span class="fn">createElement</span>(AuthCtx.Provider, { value }, children);
+}
+
+<span class="cmt">// Custom hook — consumers use this, not AuthCtx directly</span>
+<span class="kw">export function</span> <span class="fn">useAuth</span>() {
+  <span class="kw">const</span> ctx = <span class="fn">useContext</span>(<span class="cls">AuthCtx</span>);
+  <span class="kw">if</span> (!ctx) <span class="kw">throw new</span> <span class="cls">Error</span>(<span class="str">'useAuth must be used inside AuthProvider'</span>);
+  <span class="kw">return</span> ctx;
+}</code></pre>
+      </div>
+      <div class="code-block">
+        <span class="code-label">pages/profile.js</span>
+        <pre><code><span class="kw">import</span> { useAuth } <span class="kw">from</span> <span class="str">'../context/AuthContext.js'</span>;
+
+<span class="kw">function</span> <span class="fn">ProfilePage</span>() {
+  <span class="kw">const</span> { user, logout } = <span class="fn">useAuth</span>();
+  <span class="kw">return</span> <span class="fn">createElement</span>(<span class="str">'div'</span>, <span class="kw">null</span>,
+    <span class="fn">createElement</span>(<span class="str">'p'</span>, <span class="kw">null</span>, <span class="str">`Welcome, </span><span class="prop">${user.name}</span><span class="str">`</span>),
+    <span class="fn">createElement</span>(<span class="str">'button'</span>, { onClick: logout }, <span class="str">'Sign out'</span>)
+  );
+}</code></pre>
+      </div>
+
+      <h2 id="performance">Performance Notes</h2>
+      <ul>
+        <li>Every consumer of a context re-renders when its <code>Provider</code> value changes.</li>
+        <li>Split large contexts into smaller, focused ones to avoid unnecessary re-renders.</li>
+        <li>Wrap the value object in <code>useMemo</code> to prevent a new reference being created every render cycle.</li>
+        <li>For very high-frequency updates (e.g. mouse position), prefer a ref or a dedicated state manager instead of context.</li>
+      </ul>
+    </div>
+  </main>
+</div>
+<script src="nav.js"></script>
+</body>
+</html>

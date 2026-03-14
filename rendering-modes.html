@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Rendering Modes — FlexUI Docs</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="site-header">
+  <button class="header-icon-btn menu-btn" id="menu-btn" title="Toggle sidebar" aria-label="Toggle sidebar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+  <a href="index.html" class="header-logo"><div class="logo-mark"></div>FlexUI</a>
+  <span class="header-version">v1.1.3</span>
+  <div class="header-spacer"></div>
+  <button class="header-icon-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle theme"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2a6 6 0 1 0 8 8 4.5 4.5 0 0 1-8-8z"/></svg></button>
+</header>
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="main">
+    <div class="page-content">
+      <h1 class="page-title">CSR / SSR / SSG</h1>
+      <p class="page-desc">FlexUI supports three rendering modes — Client-Side Rendering, Server-Side Rendering, and Static Site Generation. Each mode is configured in <code>flexui.config.js</code> and can be mixed per-page.</p>
+
+      <div class="on-page-toc">
+        <div class="on-page-toc-title">On this page</div>
+        <a href="#comparison">Mode Comparison</a>
+        <a href="#csr">Client-Side Rendering (CSR)</a>
+        <a href="#ssr">Server-Side Rendering (SSR)</a>
+        <a href="#ssg">Static Site Generation (SSG)</a>
+        <a href="#getserversideprops">getServerSideProps</a>
+        <a href="#getstaticprops">getStaticProps</a>
+      </div>
+
+      <h2 id="comparison">Mode Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Mode</th><th>Rendered where</th><th>Data freshness</th><th>Best for</th></tr></thead>
+          <tbody>
+            <tr><td><strong>CSR</strong></td><td>Browser</td><td>Runtime</td><td>SPAs, dashboards, authenticated apps</td></tr>
+            <tr><td><strong>SSR</strong></td><td>Server per request</td><td>Per request</td><td>Dynamic pages, SEO-critical content</td></tr>
+            <tr><td><strong>SSG</strong></td><td>Build time</td><td>At build</td><td>Blogs, docs, marketing sites</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="csr">Client-Side Rendering (CSR)</h2>
+      <p>The default mode. The server sends a minimal HTML shell; FlexUI boots in the browser and renders the full UI.</p>
+      <div class="code-block">
+        <span class="code-label">src/main.js</span>
+        <pre><code><span class="kw">import</span> { createRoot } <span class="kw">from</span> <span class="str">'flexui'</span>;
+<span class="kw">import</span> App <span class="kw">from</span> <span class="str">'./App.js'</span>;
+
+<span class="fn">createRoot</span>(document.<span class="fn">getElementById</span>(<span class="str">'root'</span>)).<span class="fn">render</span>(<span class="fn">createElement</span>(App, <span class="kw">null</span>));</code></pre>
+      </div>
+      <p>You can also hydrate a server-rendered HTML string on the client:</p>
+      <pre><code><span class="kw">import</span> { hydrateRoot } <span class="kw">from</span> <span class="str">'flexui'</span>;
+<span class="fn">hydrateRoot</span>(document.<span class="fn">getElementById</span>(<span class="str">'root'</span>), <span class="fn">createElement</span>(App, <span class="kw">null</span>));</code></pre>
+
+      <h2 id="ssr">Server-Side Rendering (SSR)</h2>
+      <p>Enable SSR in config, then use <code>renderToString</code> or <code>renderToStream</code> in your server handler.</p>
+      <div class="code-block">
+        <span class="code-label">flexui.config.js</span>
+        <pre><code><span class="kw">export default</span> <span class="fn">defineConfig</span>({ ssr: <span class="kw">true</span>, port: <span class="num">8080</span> });</code></pre>
+      </div>
+      <div class="code-block">
+        <span class="code-label">server/handler.js</span>
+        <pre><code><span class="kw">import</span> { renderToString } <span class="kw">from</span> <span class="str">'flexui/server'</span>;
+<span class="kw">import</span> App <span class="kw">from</span> <span class="str">'../src/App.js'</span>;
+
+<span class="kw">export async function</span> <span class="fn">handler</span>(req, res) {
+  <span class="kw">const</span> html = <span class="kw">await</span> <span class="fn">renderToString</span>(
+    <span class="fn">createElement</span>(App, { url: req.url })
+  );
+
+  res.<span class="fn">send</span>(<span class="str">`&lt;!DOCTYPE html&gt;
+&lt;html&gt;&lt;body&gt;&lt;div id="root"&gt;</span><span class="prop">${html}</span><span class="str">&lt;/div&gt;&lt;/body&gt;&lt;/html&gt;`</span>);
+}</code></pre>
+      </div>
+
+      <h3>renderToString vs renderToStream</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Function</th><th>Returns</th><th>Use when</th></tr></thead>
+          <tbody>
+            <tr><td><code>renderToString(element)</code></td><td><code>Promise&lt;string&gt;</code></td><td>Simpler setup, full HTML before send</td></tr>
+            <tr><td><code>renderToStream(element)</code></td><td><code>ReadableStream</code></td><td>Faster TTFB, streaming Suspense boundaries</td></tr>
+            <tr><td><code>renderToDocument(element)</code></td><td><code>Promise&lt;string&gt;</code></td><td>Full HTML document with injected <code>&lt;head&gt;</code> tags</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="ssg">Static Site Generation (SSG)</h2>
+      <p>Pages are pre-rendered at build time and output as static HTML files. No server required at runtime.</p>
+      <div class="code-block">
+        <span class="code-label">flexui.config.js</span>
+        <pre><code><span class="kw">export default</span> <span class="fn">defineConfig</span>({ ssg: <span class="kw">true</span>, baseUrl: <span class="str">'https://mysite.com'</span> });</code></pre>
+      </div>
+      <pre><code><span class="cmt">## Build command</span>
+flexui build --ssg</code></pre>
+
+      <h2 id="getserversideprops">getServerSideProps</h2>
+      <p>Export this function from any page to fetch data on every request in SSR mode. The returned <code>props</code> are passed directly to your page component.</p>
+      <div class="code-block">
+        <span class="code-label">pages/dashboard.js</span>
+        <pre><code><span class="kw">export async function</span> <span class="fn">getServerSideProps</span>({ req, params, query }) {
+  <span class="kw">const</span> user = <span class="kw">await</span> <span class="fn">getUser</span>(req.cookies.token);
+  <span class="kw">if</span> (!user) <span class="kw">return</span> { redirect: <span class="str">'/login'</span> };
+
+  <span class="kw">return</span> { props: { user } };
+}
+
+<span class="kw">export default function</span> <span class="fn">Dashboard</span>({ user }) {
+  <span class="kw">return</span> <span class="fn">createElement</span>(<span class="str">'h1'</span>, <span class="kw">null</span>, <span class="str">`Hi, </span><span class="prop">${user.name}</span><span class="str">`</span>);
+}</code></pre>
+      </div>
+
+      <h2 id="getstaticprops">getStaticProps &amp; getStaticPaths</h2>
+      <p>Used in SSG mode. <code>getStaticProps</code> fetches data at build time. For dynamic routes, <code>getStaticPaths</code> declares which paths to pre-render.</p>
+      <div class="code-block">
+        <span class="code-label">pages/blog/[slug].js</span>
+        <pre><code><span class="kw">export async function</span> <span class="fn">getStaticPaths</span>() {
+  <span class="kw">const</span> posts = <span class="kw">await</span> <span class="fn">fetchAllPosts</span>();
+  <span class="kw">return</span> {
+    paths: posts.<span class="fn">map</span>(p => ({ params: { slug: p.slug } })),
+    fallback: <span class="kw">false</span>, <span class="cmt">// 404 for unknown slugs</span>
+  };
+}
+
+<span class="kw">export async function</span> <span class="fn">getStaticProps</span>({ params }) {
+  <span class="kw">const</span> post = <span class="kw">await</span> <span class="fn">fetchPost</span>(params.slug);
+  <span class="kw">return</span> { props: { post } };
+}
+
+<span class="kw">export default function</span> <span class="fn">Post</span>({ post }) {
+  <span class="kw">return</span> <span class="fn">createElement</span>(<span class="str">'article'</span>, <span class="kw">null</span>,
+    <span class="fn">createElement</span>(<span class="str">'h1'</span>, <span class="kw">null</span>, post.title),
+    <span class="fn">createElement</span>(<span class="str">'div'</span>, { dangerouslySetInnerHTML: { __html: post.content } })
+  );
+}</code></pre>
+      </div>
+
+      <div class="callout tip">
+        <span class="callout-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a4 4 0 0 1 1.5 7.7V12H6.5V9.7A4 4 0 0 1 8 2z"/><path d="M6.5 13.5h3M7 15h2"/></svg></span>
+        <div class="callout-content">
+          <div class="callout-title">Fallback: false vs true</div>
+          <code>fallback: false</code> returns a 404 for any path not in the <code>paths</code> list. <code>fallback: true</code> serves a loading state while the page is generated on-demand and cached for future requests.
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="nav.js"></script>
+</body>
+</html>

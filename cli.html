@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CLI Reference — FlexUI Docs</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="site-header">
+  <button class="header-icon-btn menu-btn" id="menu-btn" title="Toggle sidebar" aria-label="Toggle sidebar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+  <a href="index.html" class="header-logo"><div class="logo-mark"></div>FlexUI</a>
+  <span class="header-version">v1.1.3</span>
+  <div class="header-spacer"></div>
+  <button class="header-icon-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle theme"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2a6 6 0 1 0 8 8 4.5 4.5 0 0 1-8-8z"/></svg></button>
+</header>
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="main">
+    <div class="page-content">
+      <h1 class="page-title">CLI Reference</h1>
+      <p class="page-desc">The <code>flexui</code> CLI manages your entire project lifecycle — scaffolding, development, building, and deployment.</p>
+
+      <div class="on-page-toc">
+        <div class="on-page-toc-title">On this page</div>
+        <a href="#create">flexui create</a>
+        <a href="#dev">flexui dev</a>
+        <a href="#build">flexui build</a>
+        <a href="#start">flexui start</a>
+        <a href="#generate">flexui generate</a>
+      </div>
+
+      <h2 id="create">flexui create</h2>
+      <p>Scaffold a new FlexUI project from a template.</p>
+      <pre><code>flexui create &lt;name&gt; [options]</code></pre>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Option</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>-t, --template &lt;name&gt;</code></td><td><code>default</code></td><td>Project template: <code>default</code>, <code>ssr</code>, <code>ssg</code></td></tr>
+            <tr><td><code>--ts</code></td><td><code>false</code></td><td>Include TypeScript configuration</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre><code><span class="cmt"># Default SPA</span>
+flexui create my-app
+
+<span class="cmt"># SSR project</span>
+flexui create my-app -t ssr
+
+<span class="cmt"># SSG with TypeScript</span>
+flexui create my-site -t ssg --ts</code></pre>
+
+      <h2 id="dev">flexui dev</h2>
+      <p>Start the HMR development server. Changes to source files are reflected in the browser instantly.</p>
+      <pre><code>flexui dev [options]</code></pre>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Option</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>-p, --port &lt;n&gt;</code></td><td><code>3000</code></td><td>Port to listen on</td></tr>
+            <tr><td><code>-H, --host &lt;host&gt;</code></td><td><code>localhost</code></td><td>Network interface to bind</td></tr>
+            <tr><td><code>--open</code></td><td><code>false</code></td><td>Open browser automatically on start</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre><code>flexui dev --port 4000 --open</code></pre>
+
+      <div class="callout tip">
+        <span class="callout-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a4 4 0 0 1 1.5 7.7V12H6.5V9.7A4 4 0 0 1 8 2z"/><path d="M6.5 13.5h3M7 15h2"/></svg></span>
+        <div class="callout-content">
+          <div class="callout-title">HMR via WebSocket</div>
+          The dev server communicates with the browser over WebSocket. If you run behind a proxy, make sure it forwards the <code>Upgrade: websocket</code> header.
+        </div>
+      </div>
+
+      <h2 id="build">flexui build</h2>
+      <p>Bundle the project for production using esbuild. Outputs minified, tree-shaken files to <code>outDir</code>.</p>
+      <pre><code>flexui build [options]</code></pre>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Option</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>--ssg</code></td><td>Pre-render all pages at build time (Static Site Generation)</td></tr>
+            <tr><td><code>--ssr</code></td><td>Emit a server bundle for runtime SSR</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre><code><span class="cmt"># Standard CSR build</span>
+flexui build
+
+<span class="cmt"># SSG (generates static HTML for each page)</span>
+flexui build --ssg
+
+<span class="cmt"># SSR (builds both client + server bundles)</span>
+flexui build --ssr</code></pre>
+
+      <h3>Build Output</h3>
+      <pre><code>dist/
+├── index.html
+├── asset-manifest.json
+├── _chunks/
+└── static/
+    └── js/
+        ├── main.[hash].js
+        └── vendor.[hash].js</code></pre>
+
+      <h2 id="start">flexui start</h2>
+      <p>Start the production SSR HTTP server. Requires a prior <code>flexui build --ssr</code>.</p>
+      <pre><code>flexui start [options]</code></pre>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Option</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>-p, --port &lt;n&gt;</code></td><td><code>3000</code></td><td>Port to serve on</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre><code>flexui build --ssr &amp;&amp; flexui start --port 8080</code></pre>
+
+      <div class="callout info">
+        <span class="callout-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 7v4M8 5v.5"/></svg></span>
+        <div class="callout-content">
+          <div class="callout-title">Static hosting for SSG</div>
+          SSG output does not need <code>flexui start</code>. The <code>dist/</code> folder can be deployed directly to any static host (Netlify, Vercel, GitHub Pages, S3).
+        </div>
+      </div>
+
+      <h2 id="generate">flexui generate</h2>
+      <p>Generate SEO and infrastructure files from your route manifest and config.</p>
+      <pre><code>flexui generate &lt;type&gt;</code></pre>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Type</th><th>Output</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>sitemap</code></td><td><code>dist/sitemap.xml</code></td><td>XML sitemap from all routes in <code>pagesDir</code></td></tr>
+            <tr><td><code>robots</code></td><td><code>dist/robots.txt</code></td><td>robots.txt from config</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre><code>flexui generate sitemap
+flexui generate robots</code></pre>
+    </div>
+  </main>
+</div>
+<script src="nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lifecycle — FlexUI Docs</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="site-header">
+  <button class="header-icon-btn menu-btn" id="menu-btn" title="Toggle sidebar" aria-label="Toggle sidebar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+  <a href="index.html" class="header-logo"><div class="logo-mark"></div>FlexUI</a>
+  <span class="header-version">v1.1.3</span>
+  <div class="header-spacer"></div>
+  <button class="header-icon-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle theme"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2a6 6 0 1 0 8 8 4.5 4.5 0 0 1-8-8z"/></svg></button>
+</header>
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="main">
+    <div class="page-content">
+      <h1 class="page-title">Lifecycle</h1>
+      <p class="page-desc">Understand when FlexUI mounts, updates, and unmounts components — and how to hook into each phase from both functional and class components.</p>
+
+      <div class="on-page-toc">
+        <div class="on-page-toc-title">On this page</div>
+        <a href="#phases">Lifecycle Phases</a>
+        <a href="#functional">Functional Components</a>
+        <a href="#class">Class Components</a>
+        <a href="#scheduler">Scheduler &amp; Priority</a>
+      </div>
+
+      <h2 id="phases">Lifecycle Phases</h2>
+      <pre><code><span class="cmt">Mount          → Update          → Unmount
+─────────────────────────────────────────
+render()         render()          componentWillUnmount()
+    ↓                ↓
+DOM written      DOM patched
+    ↓                ↓
+componentDidMount()  componentDidUpdate()</span></code></pre>
+
+      <h2 id="functional">Functional Components</h2>
+      <p>Use <code>useEffect</code> to hook into lifecycle events from functional components:</p>
+
+      <h3>Mount</h3>
+      <pre><code><span class="fn">useEffect</span>(() => {
+  <span class="cmt">// Runs once after the component is added to the DOM</span>
+  <span class="kw">const</span> subscription = <span class="fn">subscribe</span>(handler);
+
+  <span class="cmt">// Return a cleanup function — runs on unmount</span>
+  <span class="kw">return</span> () => subscription.<span class="fn">unsubscribe</span>();
+}, []); <span class="cmt">// empty deps = mount + unmount only</span></code></pre>
+
+      <h3>Update</h3>
+      <pre><code><span class="fn">useEffect</span>(() => {
+  <span class="cmt">// Runs after every render where `userId` changed</span>
+  <span class="fn">fetchProfile</span>(userId).<span class="fn">then</span>(setProfile);
+}, [userId]);</code></pre>
+
+      <h3>Every render</h3>
+      <pre><code><span class="fn">useEffect</span>(() => {
+  document.title = <span class="str">`Page: </span><span class="prop">${title}</span><span class="str">`</span>;
+}); <span class="cmt">// no deps array = runs after every render</span></code></pre>
+
+      <h3>Before paint (useLayoutEffect)</h3>
+      <pre><code><span class="fn">useLayoutEffect</span>(() => {
+  <span class="cmt">// Runs synchronously after DOM mutations, before browser paint</span>
+  <span class="cmt">// Use to measure DOM dimensions or imperatively sync layout</span>
+  <span class="kw">const</span> { height } = boxRef.current.<span class="fn">getBoundingClientRect</span>();
+  <span class="fn">setBoxHeight</span>(height);
+}, []);</code></pre>
+
+      <h2 id="class">Class Components</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Method</th><th>Phase</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><code>constructor(props)</code></td><td>Mount</td><td>Initialize state here. Call <code>super(props)</code> first.</td></tr>
+            <tr><td><code>render()</code></td><td>Mount &amp; Update</td><td>Must be pure — no side effects.</td></tr>
+            <tr><td><code>componentDidMount()</code></td><td>Mount</td><td>DOM is ready. Safe to call APIs, set up subscriptions.</td></tr>
+            <tr><td><code>shouldComponentUpdate(nP, nS)</code></td><td>Update</td><td>Return <code>false</code> to skip re-render. <code>PureComponent</code> does this automatically.</td></tr>
+            <tr><td><code>componentDidUpdate(pP, pS)</code></td><td>Update</td><td>Previous props/state are passed. Guard updates with comparisons to avoid infinite loops.</td></tr>
+            <tr><td><code>componentWillUnmount()</code></td><td>Unmount</td><td>Clear timers, cancel fetches, remove listeners.</td></tr>
+            <tr><td><code>static getDerivedStateFromError</code></td><td>Error</td><td>Error boundary. Return updated state.</td></tr>
+            <tr><td><code>componentDidCatch(err, info)</code></td><td>Error</td><td>Error boundary. Use for logging.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block">
+        <span class="code-label">Full class lifecycle example</span>
+        <pre><code><span class="kw">class</span> <span class="cls">DataLoader</span> <span class="kw">extends</span> <span class="cls">Component</span> {
+  state = { data: <span class="kw">null</span>, loading: <span class="kw">true</span> };
+  _controller = <span class="kw">null</span>;
+
+  <span class="kw">async</span> <span class="fn">componentDidMount</span>() {
+    <span class="kw">this</span>._controller = <span class="kw">new</span> <span class="cls">AbortController</span>();
+    <span class="kw">const</span> data = <span class="kw">await</span> <span class="fn">fetchData</span>({ signal: <span class="kw">this</span>._controller.signal });
+    <span class="kw">this</span>.<span class="fn">setState</span>({ data, loading: <span class="kw">false</span> });
+  }
+
+  <span class="fn">componentDidUpdate</span>(prevProps) {
+    <span class="kw">if</span> (prevProps.id !== <span class="kw">this</span>.props.id) {
+      <span class="kw">this</span>.<span class="fn">setState</span>({ loading: <span class="kw">true</span> });
+      <span class="kw">this</span>.<span class="fn">componentDidMount</span>(); <span class="cmt">// re-fetch on id change</span>
+    }
+  }
+
+  <span class="fn">componentWillUnmount</span>() {
+    <span class="kw">this</span>._controller?.<span class="fn">abort</span>(); <span class="cmt">// cancel in-flight request</span>
+  }
+
+  <span class="fn">render</span>() {
+    <span class="kw">if</span> (<span class="kw">this</span>.state.loading) <span class="kw">return</span> <span class="fn">createElement</span>(<span class="str">'p'</span>, <span class="kw">null</span>, <span class="str">'Loading…'</span>);
+    <span class="kw">return</span> <span class="fn">createElement</span>(<span class="str">'div'</span>, <span class="kw">null</span>, <span class="cls">JSON</span>.<span class="fn">stringify</span>(<span class="kw">this</span>.state.data));
+  }
+}</code></pre>
+      </div>
+
+      <h2 id="scheduler">Scheduler &amp; Priority</h2>
+      <p>FlexUI's cooperative scheduler processes work in priority order, yielding to the browser every 5ms to preserve frame rate.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Priority</th><th>Value</th><th>Use for</th></tr></thead>
+          <tbody>
+            <tr><td><code>Priority.IMMEDIATE</code></td><td>1</td><td>Synchronous work — user input handlers, error recovery</td></tr>
+            <tr><td><code>Priority.HIGH</code></td><td>2</td><td>Animations, transitions, re-renders</td></tr>
+            <tr><td><code>Priority.NORMAL</code></td><td>3</td><td>State updates (default)</td></tr>
+            <tr><td><code>Priority.LOW</code></td><td>4</td><td>Prefetch, background data loading</td></tr>
+            <tr><td><code>Priority.IDLE</code></td><td>5</td><td>Analytics, non-critical side effects</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre><code><span class="kw">import</span> { scheduleWork, flushSync, batchUpdates, Priority } <span class="kw">from</span> <span class="str">'flexui'</span>;
+
+<span class="cmt">// Schedule non-critical work</span>
+<span class="fn">scheduleWork</span>(() => <span class="fn">sendAnalytics</span>(event), Priority.IDLE);
+
+<span class="cmt">// Force synchronous flush (use sparingly)</span>
+<span class="fn">flushSync</span>(() => <span class="fn">setState</span>(newValue));
+
+<span class="cmt">// Batch multiple setState calls into one render</span>
+<span class="fn">batchUpdates</span>(() => {
+  <span class="fn">setCount</span>(c => c + <span class="num">1</span>);
+  <span class="fn">setName</span>(<span class="str">'updated'</span>);
+});</code></pre>
+    </div>
+  </main>
+</div>
+<script src="nav.js"></script>
+</body>
+</html>
